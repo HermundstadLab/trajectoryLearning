@@ -8,12 +8,18 @@ properties of the spatial environment, training protocol, and agent.
 
 As specified in main.m, the follow data structures must be constructed before
 running the learning algorithm: 
+
       arena:      properties of the spatial environment
+      
       belief:     properties of the agent's belief about the environment
+      
       sampler:    properties that specify how the agent samples new anchor
+      
                       points to guide trajectories through the environment
+                      
       planner:    properties that specity how the agent plans a trajectory 
                       through the set of sampled anchor points    
+                      
       trial:      properties that specify the training protocol, including
                       target and obstacle locations 
                       
