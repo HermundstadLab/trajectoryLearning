@@ -3,7 +3,7 @@ MATLAB code for training an agent to intercept a target in a spatial arena
 
 The script main.m loads auxiliary functions associated with the
 primary learning algorithm. It uses these and other functions to load
-pre-stored parameters values and build data structures that specify the
+pre-stored parameter values and build data structures that specify the
 properties of the spatial environment, training protocol, and agent.
 
 As specified in main.m, the follow data structures must be constructed before
@@ -27,13 +27,13 @@ The output structure 'res' contains the results from the training
 protocol, including beliefs, planned and executed trajectories, and 
 outcomes of executed trajectories.
 
-To plot the results from an example agent, load and run the following functions:
+To plot the results from an example agent, run the following:
 
       plotParams = loadPlotParams('white');
       agent = load('exampleAgent.mat');
       trialID = 2;
       plotSingleTrial(agent.res,agent.arena,agent.belief,agent.trial,trialID,plotParams);
 
-For more info on any of the functions in the repo, run:
+For more information on any of the functions in the repo, run:
 
       help myfunction
