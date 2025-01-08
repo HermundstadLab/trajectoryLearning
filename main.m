@@ -91,9 +91,9 @@ pReward    = [];
 
 parfor i=1:nAgents
     disp(['running agent ',num2str(i)]);
-    res = runLearning(arena,belief,sampler,planner,trial);
-    rewardRate = [rewardRate, res.trajectory.rewards ];     
-    pReward    = [pReward,    res.belief.probReward  ];
+    simResults = runLearning(arena,belief,sampler,planner,trial);
+    rewardRate = [rewardRate, simResults.trajectory.rewards ];     
+    pReward    = [pReward,    simResults.belief.probReward  ];
 end
 
 
