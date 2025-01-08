@@ -1,0 +1,21 @@
+function posterior = updateBelief(prior,likelihood,outcome,cacheSignal,belief)
+% UPDATEBELIEF Updates Bayesian belief.
+%   posterior = UPDATEBELIEF(prior,likelihood,outcome,cacheSignal,belief) 
+%   uses the prior belief, together with the likelihood conditioned on the 
+%   observed outcome, to update the posterior belief. If an input cache 
+%   signal exceeds a threshold (specified in the 'belief' structure), the
+%   belief is reset to a uniform prior. 
+%
+%   See also: GETLIKELIHOOD
+
+
+% determine whether to cache
+if numel(cacheSignal)>belief.cacheWindow-1 && all(cacheSignal(end-belief.cacheWindow+1:end)>belief.cacheThreshold)
+    % if cache signal drops below threshold, cache current posterior and revert to uniform posterior prior
+    posterior = normalizeBelief(belief.mask.*ones(belief.np,belief.np)); 
+else
+    % else use prior and likelihood to update posterior
+    posterior = normalizeBelief(prior.*likelihood(:,:,outcome)); 
+end
+
+end
