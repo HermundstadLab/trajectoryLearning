@@ -44,8 +44,8 @@ addpath("auxiliaryFunctions/","auxiliaryFunctions/peaks2/","plottingFunctions/")
 
 
 % load plotting parameters
-%   current options: 'white'
-plotType = 'white';
+%   current options: 'whiteBG'
+plotType = 'whiteBG';
 plotParams = loadPlotParams(plotType);
 
 
