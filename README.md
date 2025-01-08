@@ -28,7 +28,8 @@ outcomes of executed trajectories.
 
 To plot the results from an example agent, run the following:
 
-      plotParams = loadPlotParams('white');
+      plotType = 'white';
+      plotParams = loadPlotParams(plotType);
       agent = load('exampleAgent.mat');
       trialID = 2;
       plotSingleTrial(agent.simResults,agent.arena,agent.belief,agent.trial,trialID,plotParams);
