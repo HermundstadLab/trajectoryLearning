@@ -4,9 +4,9 @@ function plotParams = loadPlotParams(plotType)
 %
 %   plotParams = LOADPLOTPARAMS(plotType) takes as input a string that 
 %   specifies the plotting configuration (currently configured for 
-%   a white background using plotType='white').  
+%   a white background using plotType='whiteBG').  
 
-if strcmp(plotType,'white')
+if strcmp(plotType,'whiteBG')
     plotParams.cFig      = [ 1, 1, 1];      % figure color
     plotParams.cArena    = [ 1, 1, 1];      % arena color
     plotParams.cTarget   = [.7,.7,.7];      % fill color for targets 
@@ -18,7 +18,7 @@ if strcmp(plotType,'white')
     plotParams.fs = 16;                     % font size
     plotParams.lw = 2;                      % linewidth
 
-%elseif strcmp(plotType,'black')            % uncomment to define plot
+%elseif strcmp(plotType,'blackBG')          % uncomment to define plot
                                             %      parameters for black background
 else
     error('unrecognized plot type');
