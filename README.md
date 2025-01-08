@@ -1,13 +1,12 @@
 # trajectoryLearning
 MATLAB code for training an agent to intercept a target in a spatial arena
 
-The script main.m loads auxiliary functions associated with the
-primary learning algorithm. It uses these and other functions to load
-pre-stored parameter values and build data structures that specify the
-properties of the spatial environment, training protocol, and agent.
-
-As specified in main.m, the follow data structures must be constructed before
-running the learning algorithm: 
+The script main.m describes how to build and train an agent in different
+simulated environments.  It first loads auxiliary and plotting functions 
+associated with the primary learning algorithm, and uses these to build 
+data structures that specify the properties of the spatial environment, 
+training protocol, and agent. As described in main.m, the following data 
+structures must be constructed before running the learning algorithm: 
 
       arena:      properties of the spatial environment
       belief:     properties of the agent's belief about the environment
