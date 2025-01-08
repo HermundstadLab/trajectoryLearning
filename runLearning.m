@@ -16,7 +16,6 @@ errormap     = belief.mask.*zeros(belief.np,belief.np);
 
 %--------------------- initialize storage variables ----------------------%
 [likelihoods,posteriors,errormaps] = deal(nan(belief.np,belief.np,trial.nTrials));   
-[anchors_rcoord,anchors_thcoord]   = deal(nan(trial.nTrials,sampler.nAnchorsMax+2));  
 [traj_executed,traj_planned]       = deal(cell(1,trial.nTrials));
 [outcome,reward,probOutcome,...
     probReward,cacheSignal]        = deal(nan(trial.nTrials,1));
