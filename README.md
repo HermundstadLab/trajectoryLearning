@@ -31,7 +31,7 @@ To plot the results from an example agent, run the following:
       plotParams = loadPlotParams('white');
       agent = load('exampleAgent.mat');
       trialID = 2;
-      plotSingleTrial(agent.res,agent.arena,agent.belief,agent.trial,trialID,plotParams);
+      plotSingleTrial(agent.simResults,agent.arena,agent.belief,agent.trial,trialID,plotParams);
 
 For more information on any of the functions in the repo, run:
 
