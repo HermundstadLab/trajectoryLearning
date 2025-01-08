@@ -9,9 +9,9 @@ function L = getLikelihood(trajectory,belief)
 %   See also: UPDATEBELIEF
 
 L = zeros(size(belief.rNorm));
+[theta,r] = cart2pol(trajectory.xCoords,trajectory.yCoords);
 for i=1:numel(trajectory.xCoords)
-    [theta,r] = cart2pol(trajectory.xCoords(i),trajectory.yCoords(i));
-    lmap = gaussian(belief.thNorm,belief.rNorm,theta./belief.size(1),r./belief.size(2),belief.sigmaL./belief.np,belief.sigmaL./belief.np);
+    lmap = gaussian(belief.thNorm,belief.rNorm,theta(i)./belief.size(1),r(i)./belief.size(2),belief.sigmaL./belief.np,belief.sigmaL./belief.np);
     lmap(isnan(lmap)) = 0;
     L = L+lmap;
 end
