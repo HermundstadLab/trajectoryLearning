@@ -1,20 +1,24 @@
-function trajectory = planTrajectory(thAnchors,rAnchors,Delta,planner)
+function trajectory = planTrajectory(thAnchors,rAnchors,phi,planner)
 % PLANTRAJECTORY Plan a trajectory through a set of anchor points.
-%   trajectory = PLANTRAJECTORY(thAnchors,rAnchors,Delta,planner) uses a 
+%   trajectory = PLANTRAJECTORY(thAnchors,rAnchors,phi,planner) uses a 
 %   set of ordered anchor points (defined in polar coordinates) and an 
-%   initial heading angle to plan a curvilinear trajectory through them.  
+%   initial heading angle phi to plan a curvilinear trajectory through them.  
 %   The input 'planner' structure contains parameters that specify the
 %   temporal discretization and overall scaling of the trajectory.
 %
 %   See also: ORDERANCHORS, OPTIMIZETRAJECTORY, EXECUTETRAJECTORY 
 
-% define generative model
+% define generative model:
+%   dth = angle between successive anchors
+%   dr = distance between successive anchors
+%   phi0 = initial heading offset, defined relative to dth-pi/2
+%   T = total time to travel between two anchors
 velocity  = @(t,amplitude,T) amplitude.*.5*(1-cos(t.*2.*pi./T));
-heading   = @(t,Delta,th,T) ((pi-2*Delta).*t./T+Delta+th-pi/2);
-amplitude = @(r,Delta,T) (r./T).*(pi-2*Delta).*(pi+2*Delta).*(3*pi-2*Delta)./(4.*pi.^2.*cos(Delta));
+heading   = @(t,phi0,dth,T) ((pi-2*phi0).*t./T+phi0+dth-pi/2);
+amplitude = @(dr,phi0,T) (dr./T).*(pi-2*phi0).*(pi+2*phi0).*(3*pi-2*phi0)./(4.*pi.^2.*cos(phi0));
 
-xtraj = @(t,R,Delta,th,T) cumsum(velocity(t,amplitude(R,Delta,T),T).*cos(heading(t,Delta,th,T)));
-ytraj = @(t,R,Delta,th,T) cumsum(velocity(t,amplitude(R,Delta,T),T).*sin(heading(t,Delta,th,T)));
+xtraj = @(t,dr,phi0,dth,T) cumsum(velocity(t,amplitude(dr,phi0,T),T).*cos(heading(t,phi0,dth,T)));
+ytraj = @(t,dr,phi0,dth,T) cumsum(velocity(t,amplitude(dr,phi0,T),T).*sin(heading(t,phi0,dth,T)));
 
 % compute scaling
 tt = planner.tAxis;
@@ -43,17 +47,17 @@ for i=2:numel(rAnchors)
 
     % ensure initial offset is the same as final offset from last segment
     if i>2
-        Delta = pi-(dth-dth0)-Delta0;
+        phi = pi-(dth-dth0)-phi0;
     end
 
     % generate trajectory linking anchors; choose multiple of initial  
     % heading offset that minimizes curvilinear distance
-    Deltas = [Delta-2*pi,Delta,Delta+2*pi];
-    dist   = nan(size(Deltas));
-    [xtmp,ytmp] = deal(nan(size(Deltas,2),numel(tt)));
+    phiMod = [phi-2*pi,phi,phi+2*pi];
+    dist   = nan(size(phiMod));
+    [xtmp,ytmp] = deal(nan(size(phiMod,2),numel(tt)));
     for j=1:3
-        xtmp(j,:) = x0+xtraj(tt,dr,Deltas(j),dth,T)./scale;
-        ytmp(j,:) = y0+ytraj(tt,dr,Deltas(j),dth,T)./scale;
+        xtmp(j,:) = x0+xtraj(tt,dr,phiMod(j),dth,T)./scale;
+        ytmp(j,:) = y0+ytraj(tt,dr,phiMod(j),dth,T)./scale;
         dist(j)   = sum(dcart(xtmp(j,:),ytmp(j,:)));
     end
     [~,isel] = min(dist);
@@ -62,17 +66,17 @@ for i=2:numel(rAnchors)
     trajectory.prevAnchor = [trajectory.prevAnchor,(i-1)*ones(1,numel(tt))];
     trajectory.xCoords    = [trajectory.xCoords,   xtmp(isel,:)];
     trajectory.yCoords    = [trajectory.yCoords,   ytmp(isel,:)];
-    trajectory.velocity   = [trajectory.velocity,  velocity(tt,amplitude(dr,Deltas(isel),T),T)];
-    trajectory.heading    = [trajectory.heading,   heading(tt,Deltas(isel),dth,T)];
-    trajectory.amplitude  = [trajectory.amplitude, amplitude(dr,Deltas(isel),T)];
+    trajectory.velocity   = [trajectory.velocity,  velocity(tt,amplitude(dr,phiMod(isel),T),T)];
+    trajectory.heading    = [trajectory.heading,   heading(tt,phiMod(isel),dth,T)];
+    trajectory.amplitude  = [trajectory.amplitude, amplitude(dr,phiMod(isel),T)];
     trajectory.offset     = [trajectory.offset,    Deltas(isel)];
 
     % update initial condition
-    x0     = xtmp(isel,end);
-    y0     = ytmp(isel,end);
-    t0     = t0+tt(end);
-    dth0   = dth;
-    Delta0 = Delta;
+    x0   = xtmp(isel,end);
+    y0   = ytmp(isel,end);
+    t0   = t0+tt(end);
+    dth0 = dth;
+    phi0 = phi;
 end
 
 trajectory.thAnchors = thAnchors;
