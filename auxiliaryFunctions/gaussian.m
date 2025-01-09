@@ -4,5 +4,5 @@ function f = gaussian(x,y,x0,y0,sigX,sigY)
 %   [x0,y0] and standard deviation [sigX,sigY] over the cartesian input 
 %   arrays x and y. The arrays x and y must have the same size.
 
-f = exp( -(x-x0).^2 / (2*sigX.^2) - (y-y0).^2 / (2*sigY.^2) );
+f = exp( -(x-x0).^2 ./ (2.*sigX.^2) - (y-y0).^2 ./ (2.*sigY.^2) );
 end
