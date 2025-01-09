@@ -34,7 +34,8 @@ if strcmp(agentType,'default')
     
     planner.nInterp     = 100;                              % number of timepoints to use to interpolate trajectories
     planner.tAxis       = linspace(0,1,planner.nInterp);    % default time axis for generating trajectory
-    planner.tScale      = belief.size(1)./2;                % used to scale the execution time of trajectory segments
+    planner.rScale      = belief.size(2)./2;                % used to scale the execution time of trajectory segments
+                                                            %   based on anchor separation relative to radial extent of arena 
     planner.tol_merge   = 0.1*belief.size(2);               % min radial distance for merging nearby anchors (a.u.)
     planner.tol_thShift = 0.005*belief.size(1);             % max angular tolerance for shifting anchors
     planner.tol_rShift  = 0.005*belief.size(2);             % max radial tolerance for shifting anchors
