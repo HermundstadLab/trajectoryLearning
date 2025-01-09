@@ -22,7 +22,7 @@ ytraj = @(t,dr,phi,dth,T) cumsum(velocity(t,amplitude(dr,phi,T),T).*sin(heading(
 
 % compute scaling
 tt = planner.tAxis;
-scale = ytraj(tt,1,Delta,pi/2,1);
+scale = ytraj(tt,1,phi,pi/2,1);
 scale = scale(end);
 
 % initialize trajectory
@@ -52,12 +52,12 @@ for i=2:numel(rAnchors)
 
     % generate trajectory linking anchors; choose multiple of initial  
     % heading offset that minimizes curvilinear distance
-    phiMod = [phi-2*pi,phi,phi+2*pi];
-    dist   = nan(size(phiMod));
-    [xtmp,ytmp] = deal(nan(size(phiMod,2),numel(tt)));
+    phiSet = [phi-2*pi,phi,phi+2*pi];
+    dist   = nan(size(phiSet));
+    [xtmp,ytmp] = deal(nan(size(phiSet,2),numel(tt)));
     for j=1:3
-        xtmp(j,:) = x0+xtraj(tt,dr,phiMod(j),dth,T)./scale;
-        ytmp(j,:) = y0+ytraj(tt,dr,phiMod(j),dth,T)./scale;
+        xtmp(j,:) = x0+xtraj(tt,dr,phiSet(j),dth,T)./scale;
+        ytmp(j,:) = y0+ytraj(tt,dr,phiSet(j),dth,T)./scale;
         dist(j)   = sum(dcart(xtmp(j,:),ytmp(j,:)));
     end
     [~,isel] = min(dist);
@@ -66,10 +66,10 @@ for i=2:numel(rAnchors)
     trajectory.prevAnchor = [trajectory.prevAnchor,(i-1)*ones(1,numel(tt))];
     trajectory.xCoords    = [trajectory.xCoords,   xtmp(isel,:)];
     trajectory.yCoords    = [trajectory.yCoords,   ytmp(isel,:)];
-    trajectory.velocity   = [trajectory.velocity,  velocity(tt,amplitude(dr,phiMod(isel),T),T)];
-    trajectory.heading    = [trajectory.heading,   heading(tt,phiMod(isel),dth,T)];
-    trajectory.amplitude  = [trajectory.amplitude, amplitude(dr,phiMod(isel),T)];
-    trajectory.offset     = [trajectory.offset,    Deltas(isel)];
+    trajectory.velocity   = [trajectory.velocity,  velocity(tt,amplitude(dr,phiSet(isel),T),T)];
+    trajectory.heading    = [trajectory.heading,   heading(tt,phiSet(isel),dth,T)];
+    trajectory.amplitude  = [trajectory.amplitude, amplitude(dr,phiSet(isel),T)];
+    trajectory.offset     = [trajectory.offset,    phiSet(isel)];
 
     % update initial condition
     x0   = xtmp(isel,end);
