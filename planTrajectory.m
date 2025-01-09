@@ -11,14 +11,14 @@ function trajectory = planTrajectory(thAnchors,rAnchors,phi,planner)
 % define generative model:
 %   dth = angle between successive anchors
 %   dr = distance between successive anchors
-%   phi0 = initial heading offset, defined relative to dth-pi/2
+%   phi = initial heading offset, defined relative to dth-pi/2
 %   T = total time to travel between two anchors
 velocity  = @(t,amplitude,T) amplitude.*.5*(1-cos(t.*2.*pi./T));
-heading   = @(t,phi0,dth,T) ((pi-2*phi0).*t./T+phi0+dth-pi/2);
-amplitude = @(dr,phi0,T) (dr./T).*(pi-2*phi0).*(pi+2*phi0).*(3*pi-2*phi0)./(4.*pi.^2.*cos(phi0));
+heading   = @(t,phi,dth,T) ((pi-2*phi).*t./T+phi+dth-pi/2);
+amplitude = @(dr,phi,T) (dr./T).*(pi-2*phi).*(pi+2*phi).*(3*pi-2*phi)./(4.*pi.^2.*cos(phi));
 
-xtraj = @(t,dr,phi0,dth,T) cumsum(velocity(t,amplitude(dr,phi0,T),T).*cos(heading(t,phi0,dth,T)));
-ytraj = @(t,dr,phi0,dth,T) cumsum(velocity(t,amplitude(dr,phi0,T),T).*sin(heading(t,phi0,dth,T)));
+xtraj = @(t,dr,phi,dth,T) cumsum(velocity(t,amplitude(dr,phi,T),T).*cos(heading(t,phi,dth,T)));
+ytraj = @(t,dr,phi,dth,T) cumsum(velocity(t,amplitude(dr,phi,T),T).*sin(heading(t,phi,dth,T)));
 
 % compute scaling
 tt = planner.tAxis;
