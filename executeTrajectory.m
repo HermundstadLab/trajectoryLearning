@@ -146,25 +146,25 @@ for i=1:numel(entrances)
         % in heading at next anchor point, choose the negative of this heading. 
         nextBoundaryHeading = heading(inds(end)+1);
         [dth,~] = dpol(thAnchors,rAnchors);
-        Delta = nextBoundaryHeading-dth+pi/2;
-        Deltas = [Delta,-Delta];
+        phi = nextBoundaryHeading-dth+pi/2;
+        phiSet = [phi,-phi];
     
         % if the next anchor point is the final one (i.e., the home port), peel
         % away from the boundary (i.e., choose first of allowed initial headings)
         if nextAnchorID==max(trajectory.prevAnchor)+1
-            Delta = Deltas(1);
+            phi = phiSet(1);
 
         % otherwise, choose the initial heading that minimizes the difference
         % with the subsequent heading
         else
             angleVec = [-2*pi,0,2*pi]';
             nextAnchorHeading = trajectory.heading(nextAnchorIndex);
-            finalHeading = pi/2+dth-Deltas;
+            finalHeading = pi/2+dth-phiSet;
             [~,indMin] = min(min(finalHeading-(nextAnchorHeading-angleVec),[],1));
-            Delta = Deltas(indMin);
+            phi = phiSet(indMin);
         end
        
-        trajDivertedOpen = planTrajectory(thAnchors,rAnchors,Delta,planner);
+        trajDivertedOpen = planTrajectory(thAnchors,rAnchors,phi,planner);
         trajDivertedOpen.prevAnchor = trajDivertedOpen.prevAnchor+prevAnchorID-1;
     end
 
