@@ -7,7 +7,7 @@ function [dr,dx,dy] = dcart(xvec,yvec)
 %
 % See also: DPOL
 
-dx = xvec(2:end)-xvec(1:end-1);
-dy = yvec(2:end)-yvec(1:end-1);
-dr  = sqrt( dx.^2 + dy.^2 ); 
+dx = diff(xvec);
+dy = diff(yvec);
+dr = sqrt( dx.^2 + dy.^2 ); 
 end
