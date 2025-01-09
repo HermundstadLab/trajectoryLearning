@@ -17,7 +17,7 @@ xtraj = @(t,R,Delta,th,T) cumsum(velocity(t,amplitude(R,Delta,T),T).*cos(heading
 ytraj = @(t,R,Delta,th,T) cumsum(velocity(t,amplitude(R,Delta,T),T).*sin(heading(t,Delta,th,T)));
 
 % compute scaling
-tt = linspace(0,1,planner.nInterp);
+tt = planner.tAxis;
 scale = ytraj(tt,1,Delta,pi/2,1);
 scale = scale(end);
 
