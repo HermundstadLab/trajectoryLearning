@@ -32,16 +32,17 @@ if strcmp(agentType,'default')
     sampler.fAnchorsSample = 0.5;               % fraction of anchors to sample
     sampler.errorThreshold = -0.1;              % error threshold for augmenting anchors points
     
-    planner.nInterp     = 100;                  % number of timepoints to use to interpolate trajectories
-    planner.tScale      = belief.size(1)./2;    % used to scale the execution time of trajectory segments
-    planner.tol_merge   = 0.1*belief.size(2);   % min radial distance for merging nearby anchors (a.u.)
-    planner.tol_thShift = 0.005*belief.size(1); % max angular tolerance for shifting anchors
-    planner.tol_rShift  = 0.005*belief.size(2); % max radial tolerance for shifting anchors
-    planner.nxObstacle  = 4*belief.np;          % number of spatial points per unit length used
-                                                %   to interpolate obstacle boundaries
-    planner.orderType   = 'TSP';                % type of ordering to use for anchor points; 
-                                                % options: 'TSP' (solves approx traveling salesman)
-                                                %          'angle' (sorts anchors based on angle)
+    planner.nInterp     = 100;                              % number of timepoints to use to interpolate trajectories
+    planner.tAxis       = linspace(0,1,planner.nInterp);    % default time axis for generating trajectory
+    planner.tScale      = belief.size(1)./2;                % used to scale the execution time of trajectory segments
+    planner.tol_merge   = 0.1*belief.size(2);               % min radial distance for merging nearby anchors (a.u.)
+    planner.tol_thShift = 0.005*belief.size(1);             % max angular tolerance for shifting anchors
+    planner.tol_rShift  = 0.005*belief.size(2);             % max radial tolerance for shifting anchors
+    planner.nxObstacle  = 4*belief.np;                      % number of spatial points per unit length used
+                                                            %   to interpolate obstacle boundaries
+    planner.orderType   = 'TSP';                            % type of ordering to use for anchor points; 
+                                                            % options: 'TSP' (solves approx traveling salesman)
+                                                            %          'angle' (sorts anchors based on angle)
 
 %elseif strcmp(agentType,'new agent type')      % uncomment to add new agent types
 else
