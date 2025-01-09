@@ -8,16 +8,24 @@ function L = getLikelihood(trajectory,belief)
 %
 %   See also: UPDATEBELIEF
 
-L = zeros(size(belief.rNorm));
-[theta,r] = cart2pol(trajectory.xCoords,trajectory.yCoords);
-for i=1:numel(trajectory.xCoords)
-    lmap = gaussian(belief.thNorm,belief.rNorm,theta(i)./belief.size(1),r(i)./belief.size(2),belief.sigmaL./belief.np,belief.sigmaL./belief.np);
-    lmap(isnan(lmap)) = 0;
-    L = L+lmap;
-end
-L = L.*belief.mask;
-L = normalizeLikelihood(L,belief.rangeL);
-L = cat(3,L,(1-L));
+% convert trajectory to polar coordinates
+[th,r] = cart2pol(trajectory.xCoords,trajectory.yCoords);
+
+% define vectorizes inputs for Gaussian 
+thAxes = repmat(belief.thNorm(:),size(th));
+rAxes  = repmat(belief.rNorm(:), size(r));
+thMean = repmat(th./belief.size(1),[belief.np.^2,1]);
+rMean  = repmat(r./belief.size(2), [belief.np.^2,1]);
+sigma  = belief.sigmaL./belief.np;
+
+% compute Gaussian for each point along the trajectory
+L = sum(gaussian(thAxes,rAxes,thMean,rMean,sigma,sigma),2);
+
+% reshape, mask, and normalize likelihood     
+L = reshape(L,[belief.np,belief.np]).*belief.mask;      
+L = normalizeLikelihood(L,belief.rangeL);               
+L = cat(3,L,(1-L));                 
+
 end
 
 function Ln = normalizeLikelihood(L,maxRange)
