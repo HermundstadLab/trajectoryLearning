@@ -65,9 +65,11 @@ for trialID=1:trial.nTrials
     posteriors( :,:,trialID) = posterior;
     errormaps(  :,:,trialID) = errormap;
     
-    % for planned trajectory, only store anchor points
+    % for planned trajectory, only store anchor points and initial heading 
+    % (sufficient to recover full planned trajectory)
     plannedTrajectoryCompact.thAnchors = plannedTrajectory.thAnchors;
-    plannedTrajectoryCompact.rAnchors = plannedTrajectory.rAnchors;
+    plannedTrajectoryCompact.rAnchors  = plannedTrajectory.rAnchors;
+    plannedTrajectoryCompact.phi       = plannedTrajectory.phi;
 
     traj_executed{trialID} = executedTrajectory;
     traj_planned{ trialID} = plannedTrajectoryCompact;
