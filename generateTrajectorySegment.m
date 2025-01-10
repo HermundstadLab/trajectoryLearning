@@ -1,4 +1,4 @@
-function [xtraj,ytraj,vtraj,htraj] = generateTrajectorySegment(t,dth,dr,phi,T)
+function [xtraj,ytraj] = generateTrajectorySegment(t,dth,dr,phi,T)
 % GENERATETRAJECTORYSEGMENT Generates a trajectory that, once appropriately
 % offset, links a pair of anchor points.
 %   [xtraj,ytraj] = GENERATETRAJECTORYSEGMENT(t,dth,dr,phi,T) takes as input  
@@ -24,24 +24,12 @@ function [xtraj,ytraj,vtraj,htraj] = generateTrajectorySegment(t,dth,dr,phi,T)
 %   T   = total time to travel between two anchors
 
 % generate speed and heading over time
-A = amplitude(dr,phi,T);
-vtraj = velocity(t,A,T);
-htraj = heading(t,phi,dth,T);
+A = (dr./T).*(pi-2*phi).*(pi+2*phi).*(3*pi-2*phi)./(4.*pi.^2.*cos(phi));
+vtraj = A.*.5*(1-cos(t.*2.*pi./T));
+htraj = ((pi-2*phi).*t./T+phi+dth-pi/2);
 
 % integrate speed and heading to get position
 xtraj = cumsum(vtraj.*cos(htraj));
 ytraj = cumsum(vtraj.*sin(htraj));
 
-end
-
-function v = velocity(t,amplitude,T)
-v = amplitude.*.5*(1-cos(t.*2.*pi./T));
-end
-
-function h = heading(t,phi,dth,T)
-h = ((pi-2*phi).*t./T+phi+dth-pi/2);
-end
-
-function A = amplitude(dr,phi,T) 
-A = (dr./T).*(pi-2*phi).*(pi+2*phi).*(3*pi-2*phi)./(4.*pi.^2.*cos(phi));
 end
