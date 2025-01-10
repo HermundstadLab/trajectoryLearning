@@ -1,8 +1,8 @@
 function [xtraj,ytraj,vtraj,htraj] = generateTrajectorySegment(t,dth,dr,phi,T)
-% GENERATETRAJECTORY Generates a trajectory that, once appropriately offset,
-% links a pair of anchor points.
-%   [xtraj,ytraj] = GENERATETRAJECTORY(t,dth,dr,phi,T) takes as input an 
-%   ordered pair of anchor points that are defined in polar coordinates 
+% GENERATETRAJECTORYSEGMENT Generates a trajectory that, once appropriately
+% offset, links a pair of anchor points.
+%   [xtraj,ytraj] = GENERATETRAJECTORYSEGMENT(t,dth,dr,phi,T) takes as input  
+%   an ordered pair of anchor points that are defined in polar coordinates 
 %   based on their angular separation 'dth' and their separation 'dr', 
 %   an initial heading angle 'phi', and a total duration 'T'. It returns 
 %   the cartesian coordinates of a curvilinear trajectory ('xtraj' and 
@@ -14,7 +14,7 @@ function [xtraj,ytraj,vtraj,htraj] = generateTrajectorySegment(t,dth,dr,phi,T)
 %   the first anchor point, and scaled based on the temporal discretization 
 %   of the trajectory (stored in planner.tScale).
 %
-%   See also: PLANTRAJECTORY 
+%   See also: PLANTRAJECTORY, RECOVERCONTROLPARAMS 
 
 % variables in generative model:
 %   t   = vector of timepoints
