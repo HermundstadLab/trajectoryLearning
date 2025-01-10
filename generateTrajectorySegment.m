@@ -1,4 +1,4 @@
-function [xtraj,ytraj] = generateTrajectorySegment(t,dth,dr,phi,T)
+function [xtraj,ytraj,vtraj,htraj] = generateTrajectorySegment(t,dth,dr,phi,T)
 % GENERATETRAJECTORYSEGMENT Generates a trajectory that, once appropriately
 % offset, links a pair of anchor points.
 %   [xtraj,ytraj] = GENERATETRAJECTORYSEGMENT(t,dth,dr,phi,T) takes as input  
@@ -6,13 +6,13 @@ function [xtraj,ytraj] = generateTrajectorySegment(t,dth,dr,phi,T)
 %   based on their angular separation 'dth' and their separation 'dr', 
 %   an initial heading angle 'phi', and a total duration 'T'. It returns 
 %   the cartesian coordinates of a curvilinear trajectory ('xtraj' and 
-%   'ytraj'), together with the instantaneous heading ('htraj'), speed 
-%   ('vtraj'), and speed amplitude ('A'). All outputs are defined over a 
-%   time vector 't'. This trajectory is defined in relative coordinates 
-%   (based on the relative separation between anchor points); to position 
-%   it in absolute coordinates, it must be offset by the [x,y] location of 
-%   the first anchor point, and scaled based on the temporal discretization 
-%   of the trajectory (stored in planner.tScale).
+%   'ytraj'), together with the instantaneous heading ('htraj') and speed 
+%   ('vtraj'). All outputs are defined over a time vector 't'. This 
+%   trajectory is defined in relative coordinates (based on the relative 
+%   separation between anchor points); to position it in absolute 
+%   coordinates, it must be offset by the [x,y] location of the first 
+%   anchor point, and scaled based on the temporal discretization of the
+%   trajectory (stored in planner.tScale).
 %
 %   See also: PLANTRAJECTORY, RECOVERCONTROLPARAMS 
 
