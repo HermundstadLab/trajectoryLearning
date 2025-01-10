@@ -18,7 +18,6 @@ trajectory.yCoords    = [];
 trajectory.velocity   = [];
 trajectory.heading    = [];
 trajectory.amplitude  = [];
-trajectory.offset     = [];
 
 t0 = 0;
 for i=2:numel(rAnchors)
@@ -37,9 +36,9 @@ for i=2:numel(rAnchors)
     % heading offset that minimizes curvilinear distance
     phiSet = [phi-2*pi,phi,phi+2*pi];
     dist   = nan(size(phiSet));
-    [xtmp,ytmp] = deal(nan(size(phiSet,2),numel(tt)));
+    [xtmp,ytmp,vtmp,htmp] = deal(nan(size(phiSet,2),numel(tt)));
     for j=1:3
-        [xtraj,ytraj] = generateTrajectorySegment(tt,dth,dr,phiSet(j),T);
+        [xtraj,ytraj,vtmp(j,:),htmp(j,:)] = generateTrajectorySegment(tt,dth,dr,phiSet(j),T);
         xtmp(j,:) = x0+xtraj./planner.tScale;
         ytmp(j,:) = y0+ytraj./planner.tScale;
         dist(j)   = sum(dcart(xtmp(j,:),ytmp(j,:)));
@@ -50,7 +49,8 @@ for i=2:numel(rAnchors)
     trajectory.prevAnchor = [trajectory.prevAnchor,(i-1)*ones(1,numel(tt))];
     trajectory.xCoords    = [trajectory.xCoords,   xtmp(isel,:)];
     trajectory.yCoords    = [trajectory.yCoords,   ytmp(isel,:)];
-    trajectory.offset     = [trajectory.offset,    phiSet(isel)];
+    trajectory.velocity   = [trajectory.velocity,  vtmp(isel,:)];
+    trajectory.heading    = [trajectory.heading,   htmp(isel,:)];
 
     % update initial condition
     x0   = xtmp(isel,end);
