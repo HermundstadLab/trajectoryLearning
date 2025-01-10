@@ -61,5 +61,5 @@ end
 
 trajectory.thAnchors = thAnchors;
 trajectory.rAnchors  = rAnchors;
-
+trajectory.phi       = phi;
 end
