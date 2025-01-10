@@ -17,7 +17,6 @@ trajectory.xCoords    = [];
 trajectory.yCoords    = [];
 trajectory.velocity   = [];
 trajectory.heading    = [];
-trajectory.amplitude  = [];
 
 t0 = 0;
 for i=2:numel(rAnchors)
