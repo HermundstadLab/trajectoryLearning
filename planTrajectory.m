@@ -17,6 +17,7 @@ trajectory.xCoords    = [];
 trajectory.yCoords    = [];
 trajectory.velocity   = [];
 trajectory.heading    = [];
+trajectory.distance   = 0;
 
 t0 = 0;
 for i=2:numel(rAnchors)
@@ -49,6 +50,7 @@ for i=2:numel(rAnchors)
     trajectory.yCoords    = [trajectory.yCoords,   ytmp(isel,:)];
     trajectory.velocity   = [trajectory.velocity,  vtmp(isel,:)];
     trajectory.heading    = [trajectory.heading,   htmp(isel,:)];
+    trajectory.distance   = trajectory.distance + dist(isel); 
 
     % update initial condition
     x0   = xtmp(isel,end);
