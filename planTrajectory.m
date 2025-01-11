@@ -37,10 +37,9 @@ for i=2:numel(rAnchors)
     dist   = nan(size(phiSet));
     [xtmp,ytmp,vtmp,htmp] = deal(nan(size(phiSet,2),numel(tt)));
     for j=1:3
-        [xtraj,ytraj,vtmp(j,:),htmp(j,:)] = generateTrajectorySegment(tt,dth,dr,phiSet(j),T);
-        xtmp(j,:) = x0+xtraj./planner.tScale;
-        ytmp(j,:) = y0+ytraj./planner.tScale;
-        dist(j)   = sum(dcart(xtmp(j,:),ytmp(j,:)));
+        [xtraj,ytraj,vtmp(j,:),htmp(j,:),dist(j)] = generateTrajectorySegment(tt,dth,dr,phiSet(j),T);
+        xtmp(j,:) = x0+xtraj;
+        ytmp(j,:) = y0+ytraj;
     end
     [~,isel] = min(dist);
 
