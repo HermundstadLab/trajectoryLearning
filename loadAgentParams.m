@@ -32,12 +32,7 @@ if strcmp(agentType,'default')
     sampler.fAnchorsSample = 0.5;               % fraction of anchors to sample
     sampler.errorThreshold = -0.1;              % error threshold for augmenting anchors points
     
-    planner.nInterp     = 100;                  % number of timepoints to use to interpolate trajectories
-    tt = linspace(0,1,planner.nInterp);         % compute time scaling s.t. a trajectory that begins 
-    [~,ytraj,~,~] = ...                         %   at [x,y]=[0,0] w/ an initial heading offset phi=pi/2  
-        generateTrajectorySegment(...           %   and a total duration of T=1 will end at [x,y]=[0,1].
-        tt,pi/2,1,pi/4,1);              
-    planner.tScale      = ytraj(end);           % time scaling
+    planner.nInterp     = 1000;                 % number of timepoints to use to interpolate trajectories
     planner.rScale      = belief.size(2)./2;    % used to scale the execution time of trajectory segments
                                                 %   based on anchor separation relative to radial extent of arena 
     planner.tol_merge   = 0.1*belief.size(2);   % min radial distance for merging nearby anchors (a.u.)
