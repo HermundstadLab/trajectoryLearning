@@ -32,9 +32,9 @@ if strcmp(agentType,'default')
     sampler.fAnchorsSample = 0.5;               % fraction of anchors to sample
     sampler.errorThreshold = -0.1;              % error threshold for augmenting anchors points
     
-    planner.nInterp     = 1000;                 % number of timepoints to use to interpolate trajectories
+    planner.nInterp     = 100;                  % number of timepoints to use to interpolate trajectories
     planner.rScale      = belief.size(2)./2;    % used to scale the execution time of trajectory segments
-                                                %   based on anchor separation relative to radial extent of arena 
+                                                %   (defined in units of distance per time)
     planner.tol_merge   = 0.1*belief.size(2);   % min radial distance for merging nearby anchors (a.u.)
     planner.tol_thShift = 0.005*belief.size(1); % max angular tolerance for shifting anchors
     planner.tol_rShift  = 0.005*belief.size(2); % max radial tolerance for shifting anchors
