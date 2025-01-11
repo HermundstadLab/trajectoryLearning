@@ -60,7 +60,7 @@ end
     function err = errFnc(params)
         nA   = (numel(params)-1)/2;
         traj = planTrajectory(params(1:nA),params(nA+1:2*nA),params(end),planner);
-        err  = sum(dcart(traj.xCoords,traj.yCoords));
+        err  = traj.distance;
     end
 
 end
