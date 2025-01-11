@@ -8,5 +8,5 @@ function [dth,dr] = dpol(thvec,rvec)
 % See also: DCART
 
 dth = atan2(diff(rvec.*sin(thvec)),diff(rvec.*cos(thvec)));
-dr  = sqrt(rvec(1:end-1).^2 + rvec(2:end).^2 - 2.*rvec(1:end-1).*rvec(2:end).*cos(diff(thvec)));
+dr  = sqrt(diff(rvec).^2 + 2.*rvec(1:end-1).*rvec(2:end).*(1-cos(diff(thvec)))); 
 end
