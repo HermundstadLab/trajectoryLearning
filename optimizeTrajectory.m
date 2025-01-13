@@ -29,7 +29,7 @@ dthLB = planner.tol_thShift*ones(1,nAnchors);       % angular shift, lower bound
 dthUB = dthLB;                                      % angular shift, upper bound 
 
 % define bounds for optimization (defined by the maximum of the lower bound
-% and the minimum boundaries of the arena, and simiularly by the minimum of
+% and the minimum boundaries of the arena, and similarly by the minimum of
 % the upper bound and the maximum boundaries of the arena):
 LB = max([[belief.thMin.*ones(1,nAnchors),belief.rMin.*ones(1,nAnchors),0];...
     [thAnchorsOrdered-dthLB,rAnchorsOrdered-drLB,0 ]],[],1);
@@ -54,7 +54,7 @@ if emin<e0
     DeltaOpt     = pmin(end);
     trajectory   = planTrajectory(thAnchorsOpt,rAnchorsOpt,DeltaOpt,planner);
 else
-    trajectory   = planTrajectory(thAnchors,rAnchors,Delta,planner);
+    trajectory   = planTrajectory(thAnchorsOrdered,rAnchorsOrdered,Delta,planner);
 end
 
     function err = errFnc(params)
