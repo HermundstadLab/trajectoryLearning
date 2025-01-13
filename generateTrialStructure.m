@@ -149,7 +149,7 @@ trial.target.xBoundary    = xBoundaryTarget;
 trial.target.yBoundary    = yBoundaryTarget;
 
 trial.obstacle.xCenters   = xcObstacle;
-trial.obstacle.xCenters   = ycObstacle;
+trial.obstacle.yCenters   = ycObstacle;
 trial.obstacle.width      = obstacle.width;
 trial.obstacle.height     = obstacle.height;
 trial.obstacle.masks      = obstacleMasks;
