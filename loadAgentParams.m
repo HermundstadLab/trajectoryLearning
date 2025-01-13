@@ -18,33 +18,37 @@ if strcmp(agentType,'default')
     % many of the following parameters are defined in normalized units (n.u.) of the posterior discretization
     % others are defined in arbitrary units of arena size (a.u.)
 
-    belief.rangeL = 0.9;                        % max range of likelihood (btw 0 and 1)    
-    belief.sigmaL = 0.075*belief.np;            % SD of gaussian likelihood (n.u.) 
-    belief.npExclude = 0.05.*belief.np;         % radial distance to exclude around home port (n.u.)
-    belief.cacheThreshold = 1.75;               % surprise threshold for caching posterior;
-    belief.cacheWindow = 2;                     % number of successive timepoints that cache signal 
-                                                % must exceed threshold
-    belief.mask = createPosteriorMask(belief);  % create environment mask
+    belief.rangeL = 0.9;                                    % max range of likelihood (btw 0 and 1)    
+    belief.sigmaL = 0.075*belief.np;                        % SD of gaussian likelihood (n.u.) 
+    belief.tol_pc = 0.05;                                   % percentage of belief space used in contructing tolerances
+    belief.npExclude   = belief.tol_pc.*belief.np;          % radial distance to exclude around home port (n.u.)
+    belief.rMinAnchors = belief.rMin + ...                  % update minimum radius based on exclusion of home port
+        belief.tol_pc*(belief.rMax-belief.rMin);
+    belief.cacheThreshold = 1.75;                           % surprise threshold for caching posterior;
+    belief.cacheWindow    = 2;                              % number of successive timepoints that cache signal 
+                                                            % must exceed threshold
+    belief.mask = createPosteriorMask(belief);              % create environment mask
 
-    sampler.minPeakDist    = 0.05.*belief.np;   % min distance between peaks in posterior (n.u.)
-    sampler.minPeakHeight  = 1./(belief.np.^2); % min height of peaks in posterior (n.u.)
-    sampler.nAnchorsMax    = 10;                % maximum number of anchors
-    sampler.fAnchorsSample = 0.5;               % fraction of anchors to sample
-    sampler.errorThreshold = -0.1;              % error threshold for augmenting anchors points
+    sampler.minPeakDist    = 0.05.*belief.np;               % min distance between peaks in posterior (n.u.)
+    sampler.minPeakHeight  = 1./(belief.np.^2);             % min height of peaks in posterior (n.u.)
+    sampler.nAnchorsMax    = 10;                            % maximum number of anchors
+    sampler.fAnchorsSample = 0.5;                           % fraction of anchors to sample
+    sampler.errorThreshold = -0.1;                          % error threshold for augmenting anchors points
     
-    planner.nInterp     = 100;                  % number of timepoints to use to interpolate trajectories
-    planner.rScale      = belief.size(2)./2;    % used to scale the execution time of trajectory segments
-                                                %   (defined in units of distance per time)
-    planner.tol_merge   = 0.1*belief.size(2);   % min radial distance for merging nearby anchors (a.u.)
-    planner.tol_thShift = 0.005*belief.size(1); % max angular tolerance for shifting anchors
-    planner.tol_rShift  = 0.005*belief.size(2); % max radial tolerance for shifting anchors
-    planner.nxObstacle  = 4*belief.np;          % number of spatial points per unit length used
-                                                %   to interpolate obstacle boundaries
-    planner.orderType   = 'TSP';                % type of ordering to use for anchor points; 
-                                                % options: 'TSP' (solves approx traveling salesman)
-                                                %          'angle' (sorts anchors based on angle)
+    planner.nInterp     = 100;                              % number of timepoints to use to interpolate trajectories
+    planner.rScale      = belief.size(2)./2;                % used to scale the execution time of trajectory segments
+                                                            %   (defined in units of distance per time)
+    planner.tol_merge   = belief.rMin;                      % min radial distance for merging nearby anchors (a.u.)
+                                                            %   (must be <= belief.rMin)
+    planner.tol_thShift = (belief.tol_pc/10)*belief.size(1);% max angular tolerance for shifting anchors
+    planner.tol_rShift  = (belief.tol_pc/10)*belief.size(2);% max radial tolerance for shifting anchors
+    planner.nxObstacle  = 4*belief.np;                      % number of spatial points per unit length used
+                                                            %   to interpolate obstacle boundaries
+    planner.orderType   = 'TSP';                            % type of ordering to use for anchor points; 
+                                                            % options: 'TSP' (solves approx traveling salesman)
+                                                            %          'angle' (sorts anchors based on angle)
 
-%elseif strcmp(agentType,'new agent type')      % uncomment to add new agent types
+%elseif strcmp(agentType,'new agent type')                  % uncomment to add new agent types
 else
     error('unrecognized agent type')
 end
