@@ -23,10 +23,10 @@ function trajectory = optimizeTrajectory(thAnchors,rAnchors,belief,planner)
 % determine specific placement of anchors, within some tolerance of their
 % original locations
 nAnchors = numel(thAnchorsOrdered);
-drLB  = [0,planner.tol_rShift*ones(1,nAnchors-2),0];      % radial shift,  lower bound 
-drUB  = planner.tol_rShift*ones(   1,nAnchors);           % radial shift,  upper bound 
-dthLB = planner.tol_thShift*ones(  1,nAnchors);           % angular shift, lower bound 
-dthUB = dthLB;                                            % angular shift, upper bound 
+drLB  = planner.tol_rShift*ones( 1,nAnchors);       % radial shift,  lower bound 
+drUB  = planner.tol_rShift*ones( 1,nAnchors);       % radial shift,  upper bound 
+dthLB = planner.tol_thShift*ones(1,nAnchors);       % angular shift, lower bound 
+dthUB = dthLB;                                      % angular shift, upper bound 
 
 % define bounds for optimization (defined by the maximum of the lower bound
 % and the minimum boundaries of the arena, and simiularly by the minimum of
