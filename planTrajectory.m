@@ -24,8 +24,11 @@ for i=2:numel(rAnchors)
     
     % compute radial and angular distance between anchors
     [dth,dr] = dpol(thAnchors(i-1:i),rAnchors(i-1:i));
+
+    % scale execution time based on separation between anchors, requiring
+    % at least two timepoints per segment
     T  = dr./planner.rScale; 
-    tt = linspace(0,T,floor(T*planner.nInterp));
+    tt = linspace(0,T,max(2,floor(T*planner.nInterp)));
 
     % ensure initial offset is the same as final offset from last segment
     if i>2
