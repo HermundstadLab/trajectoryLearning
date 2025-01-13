@@ -60,8 +60,12 @@ end
 blockIDs        = [];
 targetMasks     = [];
 obstacleMasks   = [];
+xBoundsTarget   = [];
+yBoundsTarget   = [];
 xBoundaryTarget = [];
 yBoundaryTarget = [];
+xBoundsObst     = [];
+yBoundsObst     = [];
 xBoundaryObst   = [];
 yBoundaryObst   = [];
 hBoundaryObst   = [];
@@ -76,27 +80,50 @@ for i=1:numel(xcTarget)
         xcTarget(i),ycTarget(i),target.width,target.height);
     targetMasks     = cat(3,targetMasks,targetMaskTmp);
 
-    [xbTarget,ybTarget] = getBoundary([xcTarget(i)-target.width/2,xcTarget(i)+target.width/2],...
-        [ycTarget(i)-target.height/2,ycTarget(i)+target.height/2],arena.np);
+    % define bounds of target
+    xbTarget = [xcTarget(i)-target.width/2, xcTarget(i)+target.width/2 ];
+    ybTarget = [ycTarget(i)-target.height/2,ycTarget(i)+target.height/2];
 
-    xBoundaryTarget = [xBoundaryTarget;xbTarget];
-    yBoundaryTarget = [yBoundaryTarget;ybTarget];
+    % use bounds to extract full boundary around target
+    [xbndryTarget,ybndryTarget] = getBoundary(xbTarget,ybTarget,arena.np);
+
+    % store bounds and boundaries
+    xBoundsTarget   = [xBoundsTarget;  xbTarget];
+    yBoundsTarget   = [yBoundsTarget;  ybTarget];
+    xBoundaryTarget = [xBoundaryTarget;xbndryTarget];
+    yBoundaryTarget = [yBoundaryTarget;ybndryTarget];
 
     if ~strcmp(trialParams.obstacleArrangement,'none')
         obstacleMaskTmp = generateMask(arena.X,arena.Y,...
             xcObstacle(i),ycObstacle(i),obstacle.width,obstacle.height);
         obstacleMasks   = cat(3,obstacleMasks,obstacleMaskTmp);
     
-        % densely sample boundaries of obstacle; this will be used for planning
-        % constant-velocity trajectories around obstacle
-        [xbObst,ybObst,hbObst,indSides,indCorners] = getBoundary([xcObstacle(i)-obstacle.width/2,xcObstacle(i)+obstacle.width/2],...
-            [ycObstacle(i)-obstacle.height/2,ycObstacle(i)+obstacle.height/2],planner.nxObstacle);
+        % define bounds of target
+        xbObst = [xcTarget(i)-target.width/2, xcTarget(i)+target.width/2 ];
+        ybObst = [ycTarget(i)-target.height/2,ycTarget(i)+target.height/2];
+
+        % use bounds to extract full boundary (densely-sampled) around 
+        % obstacle; this will be used for planning constant-velocity 
+        % trajectories around obstacle
+        [xbndryObst,ybndryObst,hbObst,indSides,indCorners] = ...
+            getBoundary(xbObst,ybObst,planner.nxObstacle);
     
-        xBoundaryObst    = [xBoundaryObst;xbObst];
-        yBoundaryObst    = [yBoundaryObst;ybObst];
-        hBoundaryObst    = [hBoundaryObst;hbObst];
+        % store bounds and boundaries
+        xBoundsObst      = [xBoundsObst;    xbObst    ];
+        yBoundsObst      = [yBoundsObst;    ybObst    ];
+        xBoundaryObst    = [xBoundaryObst;  xbndryObst];
+        yBoundaryObst    = [yBoundaryObst;  ybndryObst];
+        hBoundaryObst    = [hBoundaryObst;  hbObst    ];
         boundaryCorners  = [boundaryCorners;indCorners];
         boundarySides{i} = indSides;
+    else
+        xBoundsObst      = [xBoundsObst;    nan(1,2)];
+        yBoundsObst      = [yBoundsObst;    nan(1,2)];
+        xBoundaryObst    = [xBoundaryObst;  nan(1,planner.nxObstacle)];
+        yBoundaryObst    = [yBoundaryObst;  nan(1,planner.nxObstacle)];
+        hBoundaryObst    = [hBoundaryObst;  nan(1,planner.nxObstacle)];
+        boundaryCorners  = [boundaryCorners;nan(1,5)];
+        boundarySides{i} = NaN;
     end
 
 end
@@ -116,8 +143,8 @@ trial.target.yCenters     = ycTarget;
 trial.target.width        = target.width;
 trial.target.height       = target.height;
 trial.target.masks        = targetMasks;
-trial.target.xBounds      = [xcTarget-target.width/2, xcTarget+target.width/2 ];
-trial.target.yBounds      = [ycTarget-target.height/2,ycTarget+target.height/2];
+trial.target.xBounds      = xBoundsTarget;
+trial.target.yBounds      = yBoundsTarget;
 trial.target.xBoundary    = xBoundaryTarget;
 trial.target.yBoundary    = yBoundaryTarget;
 
@@ -126,8 +153,8 @@ trial.obstacle.xCenters   = ycObstacle;
 trial.obstacle.width      = obstacle.width;
 trial.obstacle.height     = obstacle.height;
 trial.obstacle.masks      = obstacleMasks;
-trial.obstacle.xBounds    = [xcObstacle-obstacle.width/2, xcObstacle+obstacle.width/2 ];
-trial.obstacle.yBounds    = [ycObstacle-obstacle.height/2,ycObstacle+obstacle.height/2];
+trial.obstacle.xBounds    = xBoundsObst;
+trial.obstacle.yBounds    = yBoundsObst;
 trial.obstacle.xBoundary  = xBoundaryObst;
 trial.obstacle.yBoundary  = yBoundaryObst;
 trial.obstacle.heading    = hBoundaryObst;
