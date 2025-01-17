@@ -17,7 +17,7 @@ priorTmp(isnan(priorTmp)) = 0;                  % remove nans for sampling (allo
 [pks,locs_r,locs_th] = peaks2(priorTmp,...      % determine peaks
     'MinPeakDistance',sampler.minPeakDist,...
     'MinPeakHeight',sampler.minPeakHeight);     
-[~,indsort] = sort(pks,'descend');
+[pkssort,indsort] = sort(pks,'descend');
 
 if numel(pks)<1
     % if there are no peaks in the prior, randomly sample the maximum number of anchors
@@ -35,8 +35,10 @@ if numel(pks)<1
     rAnchors  = belief.rAxes( indr);                                          
 
 else
-    % if there are peaks in the prior, choose fSample of the number of peaks to be anchors
-    nk = max(1,floor(sampler.fAnchorsSample.*numel(pks)));
+    
+    % if there are peaks in the prior, choose the smallest number of peaks
+    % that cover half of the total peak probability mass
+    nk = find(cumsum(pkssort./sum(pkssort))>.5,1,'first');
 
     % select top peaks to be anchor points
     indsel = indsort(1:nk);                                           
