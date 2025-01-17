@@ -18,12 +18,12 @@ errormap     = belief.mask.*zeros(belief.np,belief.np);
 [likelihoods,posteriors,errormaps] = deal(nan(belief.np,belief.np,trial.nTrials));   
 [traj_executed,traj_planned]       = deal(cell(1,trial.nTrials));
 [outcome,reward,probOutcome,...
-    probReward,cacheSignal]        = deal(nan(trial.nTrials,1));
+    probReward]                    = deal(nan(trial.nTrials,1));
     
 
 %------------------------- run learning algorithm ------------------------%
 for trialID=1:trial.nTrials
-    
+
     % update prior belief 
     prior = posterior;
 
@@ -52,7 +52,7 @@ for trialID=1:trial.nTrials
     probReward(trialID)  = computeOutcomeProb(prior,executedLikelihood,   1      );
 
     % use the outcome surprise to determine whether to cache posterior
-    cacheSignal(trialID) = computeSurprise(probOutcome(trialID));
+    cacheSignal(trialID,1) = computeSurprise(probOutcome(trialID));
 
     % update errormap based on planned and executed trajectory
     errormap = updateErrormap(plannedLikelihood,executedLikelihood,errormap);
