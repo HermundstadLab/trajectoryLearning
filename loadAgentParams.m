@@ -20,7 +20,8 @@ if strcmp(agentType,'default')
 
     belief.rangeL = 0.9;                                    % max range of likelihood (btw 0 and 1)    
     belief.sigmaL = 0.075*belief.np;                        % SD of gaussian likelihood (n.u.) 
-    belief.tol_pc = 0.05;                                   % percentage of belief space used in contructing tolerances
+    belief.tol_pc = 0.05;                                   % percentage of belief space used in constructing 
+                                                            %    tolerances for selecting/shifting anchors
     belief.npExclude   = belief.tol_pc.*belief.np;          % radial distance to exclude around home port (n.u.)
     belief.rMinAnchors = belief.rMin + ...                  % update minimum radius based on exclusion of home port
         belief.tol_pc*(belief.rMax-belief.rMin);
@@ -32,7 +33,6 @@ if strcmp(agentType,'default')
     sampler.minPeakDist    = 0.05.*belief.np;               % min distance between peaks in posterior (n.u.)
     sampler.minPeakHeight  = 1./(belief.np.^2);             % min height of peaks in posterior (n.u.)
     sampler.nAnchorsMax    = 10;                            % maximum number of anchors
-    sampler.fAnchorsSample = 0.5;                           % fraction of anchors to sample
     sampler.errorThreshold = -0.1;                          % error threshold for augmenting anchors points
     
     planner.nInterp     = 100;                              % number of timepoints to use to interpolate trajectories
