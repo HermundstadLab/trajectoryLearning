@@ -14,8 +14,8 @@ end
 
 if strcmp(coordFrame,'cart')
     
-    [xAnchors,yAnchors] = pol2cart(trajectory.thAnchors,trajectory.rAnchors);
-    plot(xAnchors,yAnchors,'x','color',plotParams.cAnchor,'MarkerSize',plotParams.ms,'linewidth',plotParams.lw)
+    [xCoords,yCoords] = pol2cart(trajectory.anchors.thCoords,trajectory.anchors.rCoords);
+    plot(xCoords,yCoords,'x','color',plotParams.cAnchor,'MarkerSize',plotParams.ms,'linewidth',plotParams.lw)
     
     xlim(arena.xBounds)
     ylim(arena.yBounds)
@@ -27,11 +27,11 @@ elseif strcmp(coordFrame,'polar')
     % to facilitate comparison with cartesian coordinates, redefine angles
     % such that positive angles are defined clockwise from the -x axis, 
     % rather than counterclockwise from the +x axis.
-    thAnchors = pi-trajectory.thAnchors;
-    rAnchors  = trajectory.rAnchors;
+    thCoords = pi-trajectory.anchors.thCoords;
+    rCoords  = trajectory.anchors.rCoords;
 
     % plot anchor points
-    plot(thAnchors,rAnchors,'x','color',plotParams.cAnchor,'MarkerSize',plotParams.ms,'linewidth',plotParams.lw)
+    plot(thCoords,rCoords,'x','color',plotParams.cAnchor,'MarkerSize',plotParams.ms,'linewidth',plotParams.lw)
 
     xlim(belief.thBounds)
     ylim(belief.rBounds)
