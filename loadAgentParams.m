@@ -28,7 +28,7 @@ if strcmp(agentType,'default')
     belief.cacheThreshold = 1.75;                           % surprise threshold for caching posterior;
     belief.cacheWindow    = 2;                              % number of successive timepoints that cache signal 
                                                             %    must exceed threshold
-    belief.mask = createPosteriorMask(belief);              % create posterior mask based on arena bounds
+    belief.mask = createPosteriorMask(belief);             % create posterior mask based on arena bounds
 
     sampler.minPeakDist    = belief.tol.*belief.np;         % min distance between peaks in posterior (n.u.)
     sampler.minPeakHeight  = 1./(belief.np.^2);             % min height of peaks in posterior (n.u.)
@@ -39,7 +39,7 @@ if strcmp(agentType,'default')
     planner.rScale      = belief.size(2)./2;                % used to scale the execution time of trajectory segments
                                                             %   (defined in units of distance per time)
     planner.tol_merge   = belief.rMinAnchors;               % tolerance for merging nearby anchors (n.u.)
-    planner.tol_shift   = 0.01;                             % tolerance for shifting anchors (n.u.)
+    planner.tol_shift   = 0.005;                            % tolerance for shifting anchors (n.u.)
     planner.thTol_shift = planner.tol_shift*belief.size(1); % default angular tolerance for shifting anchors (a.u.)
     planner.rTol_shift  = planner.tol_shift*belief.size(2); % default radial tolerance for shifting anchors (a.u.)
     planner.nxObstacle  = 4*belief.np;                      % number of spatial points per unit length used
