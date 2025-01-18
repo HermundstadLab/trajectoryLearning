@@ -23,7 +23,7 @@ if strcmp(agentType,'default')
     belief.tol_pc = 0.05;                                   % percentage of belief space used in constructing 
                                                             %    tolerances for selecting/shifting anchors
     belief.npExclude   = belief.tol_pc.*belief.np;          % radial distance to exclude around home port (n.u.)
-    belief.rMinAnchors = belief.rMin + ...                  % update minimum radius based on exclusion of home port
+    belief.rMinAnchors = belief.rMin + ...                  % define minimum radius for anchors selected beyond home port
         belief.tol_pc*(belief.rMax-belief.rMin);
     belief.cacheThreshold = 1.75;                           % surprise threshold for caching posterior;
     belief.cacheWindow    = 2;                              % number of successive timepoints that cache signal 
