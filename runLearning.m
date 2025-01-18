@@ -49,7 +49,7 @@ for trialID=1:trial.nTrials
 
     % compute the probability of the different outcomes under the prior
     probOutcome(trialID) = computeOutcomeProb(prior,executedLikelihood,outcome(trialID));
-    probReward(trialID)  = computeOutcomeProb(prior,executedLikelihood,   1      );
+    probReward(trialID)  = computeOutcomeProb(prior,executedLikelihood,       1        );
 
     % use the outcome surprise to determine whether to cache posterior
     cacheSignal(trialID,1) = computeSurprise(probOutcome(trialID));
@@ -67,12 +67,12 @@ for trialID=1:trial.nTrials
     
     % for planned trajectory, only store anchor points and initial heading 
     % (sufficient to recover full planned trajectory)
-    plannedTrajectoryCompact.thAnchors = plannedTrajectory.thAnchors;
-    plannedTrajectoryCompact.rAnchors  = plannedTrajectory.rAnchors;
-    plannedTrajectoryCompact.phi       = plannedTrajectory.phi;
+    traj_planned{ trialID}.thAnchors = plannedTrajectory.thAnchors;
+    traj_planned{ trialID}.rAnchors  = plannedTrajectory.rAnchors;
+    traj_planned{ trialID}.phi       = plannedTrajectory.phi;
 
+    % store full executed trajectory
     traj_executed{trialID} = executedTrajectory;
-    traj_planned{ trialID} = plannedTrajectoryCompact;
 
 end
 
