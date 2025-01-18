@@ -1,8 +1,8 @@
-function anchors = sampleAnchors(prior,belief,sampler)
+function anchors = sampleAnchors(prior,belief,sampler,planner)
 % SAMPLEANCHORS Sample anchor points from a probability distribution.
 %
-%   anchors = SAMPLEANCHORS(prior,belief,sampler) finds peaks in a prior 
-%   probability distribution that are of a minimum height and separation 
+%   anchors = SAMPLEANCHORS(prior,belief,sampler,planner) finds peaks in a 
+%   prior probability distribution that are of a min height and separation 
 %   (as specified in the 'belief' structure'). It then selects a fraction 
 %   of these peaks as sampled anchor points; if there are no peaks in the 
 %   distribution, this function randomly samples the maximum number of 
@@ -33,8 +33,9 @@ if numel(pks)<1
     % extract polar coordinates of anchors
     [indr,indth] = ind2sub(size(prior),lininds(indperm));
     anchors.thCoords = belief.thAxes(indth);                                           
-    anchors.rCoords  = belief.rAxes( indr );                                          
-
+    anchors.rCoords  = belief.rAxes( indr ); 
+    anchors.thTol    = planner.thTol_shift*ones(1,numel(indth));
+    anchors.rTol     = planner.rTol_shift*ones( 1,numel(indr ));
 else
     
     % if there are peaks in the prior, choose the smallest number of peaks
@@ -48,14 +49,20 @@ else
 
     % extract polar coordinates of anchors
     anchors.thCoords = belief.thAxes(indth);                                          
-    anchors.rCoords  = belief.rAxes( indr);                                           
+    anchors.rCoords  = belief.rAxes( indr); 
     
+    % extract widths of peaks to use as tolerance for shifting anchors
+    sigma = getPeakWidth(belief.np,pkssort(1:nk)',planner.tol_shift)./10;
+    anchors.rTol  = sigma.*belief.size(2);
+    anchors.thTol = sigma.*belief.size(1);
 end
 
 % remove any zero-amplitude anchors
 indrem = find(anchors.rCoords==0);                                               
 anchors.thCoords(indrem) = [];
 anchors.rCoords( indrem) = [];
+anchors.thTol(   indrem) = [];
+anchors.rTol(    indrem) = [];
 
 anchors.N = numel(anchors.rCoords);
 

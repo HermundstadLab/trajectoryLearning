@@ -20,17 +20,17 @@ if strcmp(agentType,'default')
 
     belief.rangeL = 0.9;                                    % max range of likelihood (btw 0 and 1)    
     belief.sigmaL = 0.075*belief.np;                        % SD of gaussian likelihood (n.u.) 
-    belief.tol_pc = 0.05;                                   % percentage of belief space used in constructing 
-                                                            %    tolerances for selecting/shifting anchors
-    belief.npExclude   = belief.tol_pc.*belief.np;          % radial distance to exclude around home port (n.u.)
-    belief.rMinAnchors = belief.rMin + ...                  % define minimum radius for anchors selected beyond home port
-        belief.tol_pc*(belief.rMax-belief.rMin);
+    belief.tol    = 0.05;                                   % percentage of belief space used in masking home port 
+                                                            %    and merging anchors (n.u.)
+    belief.npExclude      = belief.tol.*belief.np;          % radial distance to exclude around home port (n.u.)
+    belief.rMinAnchors    = belief.rMin + ...               % define minimum radius for anchors selected beyond home port
+        belief.tol*(belief.rMax-belief.rMin);
     belief.cacheThreshold = 1.75;                           % surprise threshold for caching posterior;
     belief.cacheWindow    = 2;                              % number of successive timepoints that cache signal 
-                                                            % must exceed threshold
-    belief.mask = createPosteriorMask(belief);              % create environment mask
+                                                            %    must exceed threshold
+    belief.mask = createPosteriorMask(belief);              % create posterior mask based on arena bounds
 
-    sampler.minPeakDist    = 0.05.*belief.np;               % min distance between peaks in posterior (n.u.)
+    sampler.minPeakDist    = belief.tol.*belief.np;         % min distance between peaks in posterior (n.u.)
     sampler.minPeakHeight  = 1./(belief.np.^2);             % min height of peaks in posterior (n.u.)
     sampler.nAnchorsMax    = 10;                            % maximum number of anchors
     sampler.errorThreshold = -0.1;                          % error threshold for augmenting anchors points
@@ -38,12 +38,15 @@ if strcmp(agentType,'default')
     planner.nInterp     = 100;                              % number of timepoints to use to interpolate trajectories
     planner.rScale      = belief.size(2)./2;                % used to scale the execution time of trajectory segments
                                                             %   (defined in units of distance per time)
-    planner.tol_merge   = belief.rMin;                      % min radial distance for merging nearby anchors (a.u.)
-                                                            %   (must be <= belief.rMin)
-    planner.tol_thShift = (belief.tol_pc/10)*belief.size(1);% max angular tolerance for shifting anchors
-    planner.tol_rShift  = (belief.tol_pc/10)*belief.size(2);% max radial tolerance for shifting anchors
+    planner.tol_merge   = belief.rMinAnchors;               % tolerance for merging nearby anchors (n.u.)
+    planner.tol_shift   = 0.01;                             % tolerance for shifting anchors (n.u.)
+    planner.thTol_shift = planner.tol_shift*belief.size(1); % default angular tolerance for shifting anchors (a.u.)
+    planner.rTol_shift  = planner.tol_shift*belief.size(2); % default radial tolerance for shifting anchors (a.u.)
     planner.nxObstacle  = 4*belief.np;                      % number of spatial points per unit length used
                                                             %   to interpolate obstacle boundaries
+    planner.scaleTol    = true;                             % determines whether to scale tolerances around individual anchors 
+                                                            % options: true (scale tolerances based on width of posterior peaks)
+                                                            %          false (used fixed tolerance for all anchors)
     planner.orderType   = 'TSP';                            % type of ordering to use for anchor points; 
                                                             % options: 'TSP' (solves approx traveling salesman)
                                                             %          'angle' (sorts anchors based on angle)

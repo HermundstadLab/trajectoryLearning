@@ -21,6 +21,8 @@ else
     [anchors.thCoords,indsort] = sort(anchors.thCoords,'ascend');
 end
 anchors.rCoords = anchors.rCoords(indsort);
+anchors.thTol   = anchors.thTol(  indsort);
+anchors.rTol    = anchors.rTol(   indsort);
 
 if strcmp(planner.orderType,'angle')
     % return anchors ordered by angle, 
@@ -28,17 +30,23 @@ if strcmp(planner.orderType,'angle')
 
     anchorsOrdered.thCoords = [0,anchors.thCoords,0];
     anchorsOrdered.rCoords  = [0,anchors.rCoords, 0];
+    anchorsOrdered.thTol    = [planner.thTol_shift,anchors.thTol,planner.thTol_shift];
+    anchorsOrdered.rTol     = [planner.rTol_shift, anchors.rTol, planner.rTol_shift ];
     anchorsOrdered.N        = numel(anchorsOrdered.thCoords);
 
 elseif strcmp(planner.orderType,'TSP')
     % solve approximate traveling salesman problem;
-    % if more than nmax anchors, break into subproblems
+    % if more than nmax anchors, break into subproblems defined by
+    %   permutation sets ('permset')
 
     nSets   = ceil(nAnchors/nAnchorsMax);
     permSet = cell(1,nSets);
 
-    baseSetR   = 0;                                         % previous ordering to append
-    baseSetTH  = 0;
+    % initialize anchor coordinates and tolerances with home port anchor
+    thCoords = 0;                                         
+    rCoords  = 0;
+    thTol = planner.thTol_shift;
+    rTol  = planner.rTol_shift;
     for i=1:nSets
         permSet{i} = perms(((i-1)*nAnchorsMax+1):...        % subset of anchor orderings
             min(nAnchors,i*nAnchorsMax));               
@@ -46,30 +54,38 @@ elseif strcmp(planner.orderType,'TSP')
 
         % if final subset of anchors, append home port as anchor
         if i==nSets
-            finalAnchorTH = 0;
-            finalAnchorR  = 0;                              
+            finalAnchor_thCoords = 0;
+            finalAnchor_rCoords  = 0;   
+            finalAnchor_thTol    = planner.thTol_shift;
+            finalAnchor_rTol     = planner.rTol_shift;
         else
-            finalAnchorTH = [];
-            finalAnchorR  = [];
+            finalAnchor_thCoords = [];
+            finalAnchor_rCoords  = [];
+            finalAnchor_thTol    = [];
+            finalAnchor_rTol     = [];
         end
 
         for j=1:size(permSet{i},1)
             % compute summed distance between anchors
-            thTmp  = [baseSetTH,anchors.thCoords(permSet{i}(j,:)),finalAnchorTH];
-            rTmp   = [baseSetR, anchors.rCoords( permSet{i}(j,:)),finalAnchorR ];
-            [~,dr] = dpol(thTmp,rTmp);
+            thCoords_tmp = [thCoords,anchors.thCoords(permSet{i}(j,:)),finalAnchor_thCoords];
+            rCoords_tmp  = [rCoords, anchors.rCoords( permSet{i}(j,:)),finalAnchor_rCoords ];
+            [~,dr] = dpol(thCoords_tmp,rCoords_tmp);
             netDist = sum(dr);  
         end
 
         % find ordering that minimizes distance 
         [~,isel]  = min(netDist);
-        baseSetTH = [baseSetTH,anchors.thCoords(permSet{i}(isel,:)),finalAnchorTH];
-        baseSetR  = [baseSetR, anchors.rCoords( permSet{i}(isel,:)),finalAnchorR ];
+        thCoords = [thCoords,anchors.thCoords(permSet{i}(isel,:)),finalAnchor_thCoords];
+        rCoords  = [rCoords, anchors.rCoords( permSet{i}(isel,:)),finalAnchor_rCoords ];
+        thTol    = [thTol,   anchors.thTol(   permSet{i}(isel,:)),finalAnchor_thTol   ];
+        rTol     = [rTol,    anchors.rTol(    permSet{i}(isel,:)),finalAnchor_rTol    ];
     end
 
     %return ordered set of anchors, with home port appended
-    anchorsOrdered.thCoords = baseSetTH;
-    anchorsOrdered.rCoords  = baseSetR;
+    anchorsOrdered.thCoords = thCoords;
+    anchorsOrdered.rCoords  = rCoords;
+    anchorsOrdered.thTol    = thTol;
+    anchorsOrdered.rTol     = rTol;
 else
     error('unrecognized anchor ordering')
 end
@@ -81,6 +97,8 @@ while any(allDists<planner.tol_merge)
     irem = find(allDists<planner.tol_merge,1,'first');
     anchorsOrdered.thCoords(irem) = [];
     anchorsOrdered.rCoords( irem) = [];
+    anchorsOrdered.thTol(   irem) = [];
+    anchorsOrdered.rTol(    irem) = [];
     [~,allDists] = dpol(anchorsOrdered.thCoords,anchorsOrdered.rCoords); 
 end
 anchorsOrdered.N = numel(anchorsOrdered.thCoords);

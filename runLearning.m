@@ -28,7 +28,7 @@ for trialID=1:trial.nTrials
     prior = posterior;
 
     % sample anchor points from prior
-    anchors = sampleAnchors(prior,belief,sampler);
+    anchors = sampleAnchors(prior,belief,sampler,planner);
 
     % plan optimal trajectory through the set of anchors
     plannedTrajectory = optimizeTrajectory(anchors,belief,planner);
