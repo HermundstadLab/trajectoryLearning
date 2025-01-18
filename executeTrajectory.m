@@ -74,14 +74,14 @@ for i=1:numel(entrances)
     % extract first anchor point after trajectory passes through obstacle
     prevAnchorID = trajectory.prevAnchor(exits(i));
     nextAnchorID = prevAnchorID+1;
-    [xAnchor,yAnchor] = pol2cart(trajectory.thAnchors(nextAnchorID),...
-        trajectory.rAnchors(nextAnchorID));
+    [xAnchor,yAnchor] = pol2cart(trajectory.anchors.thCoords(nextAnchorID),...
+        trajectory.anchors.rCoords(nextAnchorID));
 
     % if next anchor is within the obstacle, select the subsequent anchor
     if intersectTrajectory(xAnchor,yAnchor,trial.obstacle.xBounds(blockID,:),trial.obstacle.yBounds(blockID,:))
         nextAnchorID = nextAnchorID+1;
-        [xAnchor,yAnchor] = pol2cart(trajectory.thAnchors(nextAnchorID),...
-            trajectory.rAnchors(nextAnchorID));
+        [xAnchor,yAnchor] = pol2cart(trajectory.anchors.thCoords(nextAnchorID),...
+            trajectory.anchors.rCoords(nextAnchorID));
     end
 
     % extract the obstacle faces that are exposed to the anchor point
@@ -137,15 +137,15 @@ for i=1:numel(entrances)
         % once trajectory reaches the first exposed corner of the obstacle,
         % use the corner as an anchor point, and generate a standard trajectory 
         % segment to the next (i.e., the original) anchor point:
-        [thAnchors,rAnchors] = cart2pol(xBoundary(indExposed(1)+1),yBoundary(indExposed(1)+1));
-        thAnchors = [thAnchors,trajectory.thAnchors(nextAnchorID)];
-        rAnchors  = [rAnchors, trajectory.rAnchors( nextAnchorID)];
+        [anchors.thCoords,anchors.rCoords] = cart2pol(xBoundary(indExposed(1)+1),yBoundary(indExposed(1)+1));
+        anchors.thCoords = [anchors.thCoords,trajectory.anchors.thCoords(nextAnchorID)];
+        anchors.rCoords  = [anchors.rCoords, trajectory.anchors.rCoords( nextAnchorID)];
     
         % choose initial heading such that agent initially follows obstacle 
         % boundary before peeling away; if this generates a large discontinuity
         % in heading at next anchor point, choose the negative of this heading. 
         nextBoundaryHeading = heading(inds(end)+1);
-        [dth,~] = dpol(thAnchors,rAnchors);
+        [dth,~] = dpol(anchors.thCoords,anchors.rCoords);
         phi = nextBoundaryHeading-dth+pi/2;
         phiSet = [phi,-phi];
     
@@ -164,7 +164,7 @@ for i=1:numel(entrances)
             phi = phiSet(indMin);
         end
        
-        trajDivertedOpen = planTrajectory(thAnchors,rAnchors,phi,planner);
+        trajDivertedOpen = planTrajectory(anchors,phi,planner);
         trajDivertedOpen.prevAnchor = trajDivertedOpen.prevAnchor+prevAnchorID-1;
     end
 
@@ -208,7 +208,7 @@ if numel(entrances)>0
     end
 
     % store remaining fields:
-    trajFields = {'amplitude','offset','thAnchors','rAnchors'};
+    trajFields = {'amplitude','offset','anchors'};
     for i=1:numel(trajFields)
         executedTrajectory.(trajFields{i}) = trajectory.(trajFields{i});
     end

@@ -1,13 +1,14 @@
-function [thAnchors,rAnchors] = sampleAnchors(prior,belief,sampler)
+function anchors = sampleAnchors(prior,belief,sampler)
 % SAMPLEANCHORS Sample anchor points from a probability distribution.
 %
-%   [thAnchors,rAnchors] = SAMPLEANCHORS(prior,belief,sampler) finds
-%   peaks in a prior probability distribution that are of a minimum height 
-%   and separation (as specified in the 'belief' structure'). It then 
-%   selects a fraction of these peaks as sampled anchor points; if there 
-%   are no peaks in the distribution, this function randomly samples the 
-%   maximum number of allowed peaks (as specified in the 'sampler' 
-%   structure). 
+%   anchors = SAMPLEANCHORS(prior,belief,sampler) finds peaks in a prior 
+%   probability distribution that are of a minimum height and separation 
+%   (as specified in the 'belief' structure'). It then selects a fraction 
+%   of these peaks as sampled anchor points; if there are no peaks in the 
+%   distribution, this function randomly samples the maximum number of 
+%   allowed peaks (as specified in the 'sampler' structure). The polar 
+%   coordinates of these anchors are stored in the output structure 
+%   'anchors'.  
 %
 %   See also: PEAKS2
 
@@ -31,8 +32,8 @@ if numel(pks)<1
 
     % extract polar coordinates of anchors
     [indr,indth] = ind2sub(size(prior),lininds(indperm));
-    thAnchors = belief.thAxes(indth);                                           
-    rAnchors  = belief.rAxes( indr);                                          
+    anchors.thCoords = belief.thAxes(indth);                                           
+    anchors.rCoords  = belief.rAxes( indr );                                          
 
 else
     
@@ -46,14 +47,16 @@ else
     indr   = locs_r( indsel);                                          
 
     % extract polar coordinates of anchors
-    thAnchors = belief.thAxes(indth);                                          
-    rAnchors  = belief.rAxes( indr);                                           
+    anchors.thCoords = belief.thAxes(indth);                                          
+    anchors.rCoords  = belief.rAxes( indr);                                           
     
 end
 
 % remove any zero-amplitude anchors
-indrem = find(rAnchors==0);                                               
-rAnchors( indrem) = [];
-thAnchors(indrem) = [];
+indrem = find(anchors.rCoords==0);                                               
+anchors.thCoords(indrem) = [];
+anchors.rCoords( indrem) = [];
+
+anchors.N = numel(anchors.rCoords);
 
 end

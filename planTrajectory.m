@@ -1,15 +1,16 @@
-function trajectory = planTrajectory(thAnchors,rAnchors,phi,planner)
+function trajectory = planTrajectory(anchors,phi,planner)
 % PLANTRAJECTORY Plan a trajectory through a set of anchor points.
-%   trajectory = PLANTRAJECTORY(thAnchors,rAnchors,phi,planner) uses a 
-%   set of ordered anchor points (defined in polar coordinates) and an 
-%   initial heading angle phi to plan a curvilinear trajectory through them.  
-%   The input 'planner' structure contains parameters that specify the
-%   temporal discretization and overall scaling of the trajectory.
+%   trajectory = PLANTRAJECTORY(anchors,phi,planner) uses a set of ordered 
+%   anchor points (defined in polar coordinates and stored in the structure 
+%   'anchors') and an initial heading angle phi to plan a curvilinear 
+%   trajectory through them.  The input 'planner' structure contains 
+%   parameters that specify the temporal discretization and overall scaling 
+%   of the trajectory.
 %
 %   See also: ORDERANCHORS, GENERATETRAJECTORY, OPTIMIZETRAJECTORY, EXECUTETRAJECTORY 
 
 % initialize trajectory
-[x0,y0] = pol2cart(thAnchors(1),rAnchors(1));
+[x0,y0] = pol2cart(anchors.thCoords(1),anchors.rCoords(1));
 dth0    = 0;
 
 trajectory.prevAnchor = [];
@@ -20,10 +21,10 @@ trajectory.heading    = [];
 trajectory.distance   = 0;
 
 t0 = 0;
-for i=2:numel(rAnchors)
+for i=2:anchors.N
     
     % compute radial and angular distance between anchors
-    [dth,dr] = dpol(thAnchors(i-1:i),rAnchors(i-1:i));
+    [dth,dr] = dpol(anchors.thCoords(i-1:i),anchors.rCoords(i-1:i));
 
     % scale execution time based on separation between anchors, requiring
     % at least two timepoints per segment
@@ -63,7 +64,6 @@ for i=2:numel(rAnchors)
     phi0 = phi;
 end
 
-trajectory.thAnchors = thAnchors;
-trajectory.rAnchors  = rAnchors;
-trajectory.phi       = phi;
+trajectory.anchors = anchors;
+trajectory.phi     = phi;
 end

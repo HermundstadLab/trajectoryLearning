@@ -24,16 +24,17 @@ predError = min(errormap(lininds));
 % if error exceeds threshold, augment the set of anchor points by sampling
 % from the errormap, and plan a new trajectory
 if predError<sampler.errorThreshold
-    %sample new anchor points from the errormap
-    [thAnchorsAug,rAnchorsAug] = sampleAnchors(errormap,belief,sampler);
+    %sample new 'augmenting' set of anchor points from the errormap
+    anchorsAug = sampleAnchors(errormap,belief,sampler);
 
     % remove home port from existing set of anchor points, and augment 
     % set with newly sampled anchor points
-    thAnchors = [trajectory.thAnchors(2:end-1),thAnchorsAug];
-    rAnchors  = [trajectory.rAnchors( 2:end-1),rAnchorsAug ];
+    anchors.thCoords = [trajectory.anchors.thCoords(2:end-1),anchorsAug.thCoords];
+    anchors.rCoords  = [trajectory.anchors.rCoords( 2:end-1),anchorsAug.rCoords ];
+    anchors.N = numel(anchors.thCoords);
 
     % plan new trajectory through augmented set of anchors
-    plannedTrajectory = optimizeTrajectory(thAnchors,rAnchors,belief,planner);
+    plannedTrajectory = optimizeTrajectory(anchors,belief,planner);
 
 %otherwise, proceed with initial plan for trajectory
 else

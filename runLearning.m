@@ -28,10 +28,10 @@ for trialID=1:trial.nTrials
     prior = posterior;
 
     % sample anchor points from prior
-    [thAnchors,rAnchors] = sampleAnchors(prior,belief,sampler);
+    anchors = sampleAnchors(prior,belief,sampler);
 
     % plan optimal trajectory through the set of anchors
-    plannedTrajectory = optimizeTrajectory(thAnchors,rAnchors,belief,planner);
+    plannedTrajectory = optimizeTrajectory(anchors,belief,planner);
 
     % evaluate whether planned trajectory is likely to intercept obstacles;
     % if so, augment anchor points to avoid obstacle
@@ -67,9 +67,8 @@ for trialID=1:trial.nTrials
     
     % for planned trajectory, only store anchor points and initial heading 
     % (sufficient to recover full planned trajectory)
-    traj_planned{ trialID}.thAnchors = plannedTrajectory.thAnchors;
-    traj_planned{ trialID}.rAnchors  = plannedTrajectory.rAnchors;
-    traj_planned{ trialID}.phi       = plannedTrajectory.phi;
+    traj_planned{ trialID}.anchors = plannedTrajectory.anchors;
+    traj_planned{ trialID}.phi     = plannedTrajectory.phi;
 
     % store full executed trajectory
     traj_executed{trialID} = executedTrajectory;
