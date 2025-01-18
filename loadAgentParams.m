@@ -28,7 +28,10 @@ if strcmp(agentType,'default')
     belief.cacheThreshold = 1.75;                           % surprise threshold for caching posterior;
     belief.cacheWindow    = 2;                              % number of successive timepoints that cache signal 
                                                             %    must exceed threshold
-    belief.mask = createPosteriorMask(belief);             % create posterior mask based on arena bounds
+    belief.mask  = createPosteriorMask(belief);             % create posterior mask based on arena bounds
+    belief.cache = false;                                   % determines whether to cache posterior
+                                                            % options: true (reset to uniform prior when cache signal exceeds threshold)
+                                                            %          false (never reset to uniform prior)      
 
     sampler.minPeakDist    = belief.tol.*belief.np;         % min distance between peaks in posterior (n.u.)
     sampler.minPeakHeight  = 1./(belief.np.^2);             % min height of peaks in posterior (n.u.)
