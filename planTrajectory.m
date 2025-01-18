@@ -18,9 +18,11 @@ trajectory.xCoords    = [];
 trajectory.yCoords    = [];
 trajectory.velocity   = [];
 trajectory.heading    = [];
+trajectory.timepts    = [];
 trajectory.distance   = 0;
 
 t0 = 0;
+tAnchors = t0;
 for i=2:anchors.N
     
     % compute radial and angular distance between anchors
@@ -54,6 +56,7 @@ for i=2:anchors.N
     trajectory.yCoords    = [trajectory.yCoords,   ytmp(isel,:)];
     trajectory.velocity   = [trajectory.velocity,  vtmp(isel,:)];
     trajectory.heading    = [trajectory.heading,   htmp(isel,:)];
+    trajectory.timepts    = [trajectory.timepts,   t0+tt       ];
     trajectory.distance   = trajectory.distance + dist(isel); 
 
     % update initial condition
@@ -62,8 +65,12 @@ for i=2:anchors.N
     t0   = t0+tt(end);
     dth0 = dth;
     phi0 = phi;
+
+    % update timing of anchor points
+    tAnchors = [tAnchors,t0];
 end
 
-trajectory.anchors = anchors;
-trajectory.phi     = phi;
+trajectory.anchors         = anchors;
+trajectory.anchors.timepts = tAnchors;
+trajectory.phi             = phi;
 end
