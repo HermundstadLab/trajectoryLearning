@@ -1,4 +1,4 @@
-function posterior = updateBelief(prior,likelihood,outcome,cacheSignal,belief)
+function [posterior,cache] = updateBelief(prior,likelihood,outcome,cacheSignal,belief)
 % UPDATEBELIEF Updates Bayesian belief.
 %   posterior = UPDATEBELIEF(prior,likelihood,outcome,cacheSignal,belief) 
 %   uses the prior belief, together with the likelihood conditioned on the 
