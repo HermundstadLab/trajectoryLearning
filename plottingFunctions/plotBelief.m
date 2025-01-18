@@ -7,7 +7,7 @@ function plotBelief(posterior,belief,plotParams,plotTitle)
 %   belief. The input string 'plotTitle' specifies which quantity is being
 %   plotted, and is used as the title of the plot.
 %
-%   See also: PLOTANCHORS, PLOTTRAJECTORY, PLOTSINGLETRIAL
+%   See also: PLOTANCHORS, PLOTTRAJECTORY, PLOTCONTROLPARAMS,PLOTSINGLETRIAL
 
 if nargin<4
     plotTitle = [];

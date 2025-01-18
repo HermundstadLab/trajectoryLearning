@@ -6,7 +6,7 @@ function plotAnchors(trajectory,arena,belief,plotParams,coordFrame)
 %   is specified by the string input 'coordFrame', which can take values 
 %   'cart' or 'polar'. 
 %
-%   See also: PLOTBELIEF, ,PLOTTRAJECTORY, PLOTSINGLETRIAL
+%   See also: PLOTBELIEF, PLOTTRAJECTORY, PLOTCONTROLPARAMS, PLOTSINGLETRIAL
  
 if nargin<4
     coordFrame = 'cart';

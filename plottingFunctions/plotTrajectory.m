@@ -1,21 +1,30 @@
-function plotTrajectory(trajectory,arena,trial,trialID,plotParams,coordFrame)
+function plotTrajectory(trajectory,arena,planner,trial,trialID,plotParams,trajType,coordFrame)
 % PLOTTRAJECTORY Plot a single trajectory embedded in the arena.
 %
-%   PLOTTRAJECTORY(trajectory,arena,trial,trialID,plotParams,coordFrame) 
-%   plots the agent's trajectory in either cartesian or polar coordinates. 
-%   This is specified by the string input 'coordFrame', which can take 
-%   values 'cart' or 'polar'. If specified  in cartesian coordinates, this 
-%   function also plots the target and, if applicable, the obstable that 
-%   the agent encountered on a given trial. The input structures 'arena' 
-%   and 'trial' contain information for plotting the arena boundaries and 
-%   the locations of the target and obstacle.
+%   PLOTTRAJECTORY(trajectory,arena,planner,trial,trialID,plotParams,...
+%   trajType,coordFrame) plots the agent's trajectory in either cartesian 
+%   or polar coordinates. This is specified by the string input 'coordFrame', 
+%   which can take  values 'cart' or 'polar'. If specified  in cartesian 
+%   coordinates, this function also plots the target and, if applicable, 
+%   the obstable that the agent encountered on a given trial. The input   
+%   variable 'trajType' specifies whether the input trajectory is a planned 
+%   or executed trajectory; if planned, this function recomputes the 
+%   planned trajectory from the initial heading and anchor points (using 
+%   information in the 'planner' input structure). The input structures 
+%   'arena' and 'trial' contain information for plotting the arena 
+%   boundaries and the locations of the target and obstacle.
 %
-%   See also: PLOTBELIEF, PLOTANCHORS, PLOTSINGLETRIAL
+%   See also: PLOTBELIEF, PLOTANCHORS, PLOTCONTROLPARAMS, PLOTSINGLETRIAL 
  
-if nargin<6
+if nargin<8
     coordFrame = 'cart';
 end
 
+% if input trajectory is a planned (rather than executed) trajectory,
+% recompute full trajectory from initial heading and anchor points
+if strcmp(trajType,'planned')
+    trajectory = planTrajectory(trajectory.anchors,trajectory.phi,planner);
+end
 
 blockID = trial.blockIDs(trialID);
 if strcmp(coordFrame,'cart')
