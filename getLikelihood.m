@@ -19,7 +19,7 @@ rMean  = repmat(r./belief.size(2), [belief.np.^2,1]);
 sigma  = belief.sigmaL./belief.np;
 
 % compute Gaussian for each point along the trajectory
-L = sum(gaussian(thAxes,rAxes,thMean,rMean,sigma,sigma),2);
+L = sum(gaussian(thAxes,rAxes,thMean,rMean,sigma,sigma),2,'omitnan');
 
 % reshape, mask, and normalize likelihood     
 L = reshape(L,[belief.np,belief.np]).*belief.mask;      
