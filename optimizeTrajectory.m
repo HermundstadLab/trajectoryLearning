@@ -28,8 +28,8 @@ if planner.scaleTol
     dthLB = anchorsOrdered.thTol;                   % angular shift, lower bound 
     drLB  = anchorsOrdered.rTol;                    % radial shift,  lower bound 
 else
-    dthLB = planner.tol_shift.*ones(1,nAnchors);    % angular shift, lower bound 
-    drLB  = planner.tol_shift.*ones(1,nAnchors);    % radial shift,  lower bound 
+    dthLB = planner.thTol_shift.*ones(1,nAnchors);  % angular shift, lower bound 
+    drLB  = planner.rTol_shift.*ones(1,nAnchors);   % radial shift,  lower bound 
 end
 dthUB = dthLB;                                      % angular shift, upper bound 
 drUB  = drLB;                                       % radial shift,  upper bound 
