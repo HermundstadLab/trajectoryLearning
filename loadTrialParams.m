@@ -13,7 +13,7 @@ function trialParams = loadTrialParams(exptType)
 
 trialParams.exptType = exptType;
 if strcmp(exptType,'multiTarget')
-    trialParams.nBlocks             = 5;
+    trialParams.nBlocks             = 2;
     trialParams.nTargets            = trialParams.nBlocks;
     trialParams.nTrialsPerTarget    = 100;
     trialParams.targetArrangement   = 'radial';
