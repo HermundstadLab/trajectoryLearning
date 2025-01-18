@@ -18,7 +18,7 @@ errormap     = belief.mask.*zeros(belief.np,belief.np);
 [likelihoods,posteriors,errormaps] = deal(nan(belief.np,belief.np,trial.nTrials));   
 [traj_executed,traj_planned]       = deal(cell(1,trial.nTrials));
 [outcome,reward,probOutcome,...
-    probReward]                    = deal(nan(trial.nTrials,1));
+    probReward,cache]              = deal(nan(trial.nTrials,1));
     
 
 %------------------------- run learning algorithm ------------------------%
@@ -58,7 +58,7 @@ for trialID=1:trial.nTrials
     errormap = updateErrormap(plannedLikelihood,executedLikelihood,errormap);
 
     % update belief based on executed trajectory and outcome
-    posterior = updateBelief(prior,executedLikelihood,outcome(trialID),cacheSignal,belief);
+    [posterior,cache(trialID)] = updateBelief(prior,executedLikelihood,outcome(trialID),cacheSignal,belief);
 
     %------------------------ append results ---------------------------%
     likelihoods(:,:,trialID) = executedLikelihood(:,:,outcome(trialID));
@@ -85,5 +85,6 @@ simResults.belief.likelihoods   = likelihoods;
 simResults.belief.posteriors    = posteriors;
 simResults.belief.cacheSignal   = cacheSignal;
 simResults.belief.probReward    = probReward;
+simResults.belief.cache         = cache;
 
 end
