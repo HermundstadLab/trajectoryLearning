@@ -89,5 +89,7 @@ elseif strcmp(planner.orderType,'TSP')
 else
     error('unrecognized anchor ordering')
 end
+% store number of anchor points
+anchorsOrdered.N = numel(anchorsOrdered.thCoords);
 
 end
