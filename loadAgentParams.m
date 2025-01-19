@@ -29,7 +29,7 @@ if strcmp(agentType,'default')
     belief.cacheWindow    = 2;                              % number of successive timepoints that cache signal 
                                                             %    must exceed threshold
     belief.mask  = createPosteriorMask(belief);             % create posterior mask based on arena bounds
-    belief.cache = false;                                   % determines whether to cache posterior
+    belief.cache = true;                                    % determines whether to cache posterior
                                                             % options: true (reset to uniform prior when cache signal exceeds threshold)
                                                             %          false (never reset to uniform prior)      
 
@@ -41,7 +41,6 @@ if strcmp(agentType,'default')
     planner.nInterp     = 100;                              % number of timepoints to use to interpolate trajectories
     planner.rScale      = belief.size(2)./2;                % used to scale the execution time of trajectory segments
                                                             %   (defined in units of distance per time)
-    planner.tol_merge   = belief.rMinAnchors;               % tolerance for merging nearby anchors (n.u.)
     planner.tol_shift   = 0.005;                            % tolerance for shifting anchors (n.u.)
     planner.thTol_shift = planner.tol_shift*belief.size(1); % default angular tolerance for shifting anchors (a.u.)
     planner.rTol_shift  = planner.tol_shift*belief.size(2); % default radial tolerance for shifting anchors (a.u.)
