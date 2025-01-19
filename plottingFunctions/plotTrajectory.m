@@ -44,9 +44,15 @@ if strcmp(coordFrame,'cart')
 
 elseif strcmp(coordFrame,'polar')
 
-    % to facilitate comparison with cartesian coordinates, redefine angles
-    % such that positive angles are defined clockwise from the -x axis, 
-    % rather than counterclockwise from the +x axis.
+    % for plotting purposes, trim values outside of arena bounds (this can 
+    % happen when anchors lie within arena bounds, but planned trajectory 
+    % through anchors requires traveling beyond arena bounds; this is 
+    % permitted in planned trajectories, but not in their execution).
+    trajectory = boundTrajectory(trajectory,arena.xBounds,arena.yBounds);
+
+    % extract polar coordinates of trajectory. To facilitate comparison 
+    % with cartesian coordinates, redefine angles such that positive angles 
+    % are defined CW from the -x axis, rather than CCW from the +x axis.
     [thCoords,rCoords] = cart2pol(trajectory.xCoords,trajectory.yCoords);
     thCoords = pi-thCoords;
 

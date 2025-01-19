@@ -223,15 +223,6 @@ executedTrajectory = boundTrajectory(executedTrajectory,arena.xBounds,arena.yBou
 end
 
 
-function traj = boundTrajectory(traj,xBounds,yBounds)
-% returns a new trajectory whose spatial extent does not exceed a set of
-% bounds 
-traj.xCoords(traj.xCoords<xBounds(1)) = xBounds(1);
-traj.xCoords(traj.xCoords>xBounds(2)) = xBounds(2);
-traj.yCoords(traj.yCoords<yBounds(1)) = yBounds(1);
-traj.yCoords(traj.yCoords>yBounds(2)) = yBounds(2);
-end
-
 function [intersect,intersection,inds] = intersectTrajectory(xCoords,yCoords,xBounds,yBounds)
 % identifies the portions of a trajectory that fall within a set of bounds,
 % and returns a binary vector that delineates intersections

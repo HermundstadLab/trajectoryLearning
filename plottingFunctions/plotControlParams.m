@@ -23,12 +23,41 @@ end
 
 if strcmp(paramType,'velocity')
     plot(trajectory.timepts,trajectory.velocity,'color',plotParams.cTraj,'linewidth',plotParams.lw);hold on;
+
+    % set bounds
     ymin = 0;
     ymax = ceil(max(trajectory.velocity)/10)*10;
+
 elseif strcmp(paramType,'heading')
-    plot(trajectory.timepts,wrapToPi(trajectory.heading),'color',plotParams.cTraj,'linewidth',plotParams.lw);hold on;
+    % wrap heading to [-pi,pi] for plotting
+    heading = wrapToPi(trajectory.heading);
+
+    % find discontinuities in heading
+    jumps = find(abs(diff(heading))>pi); 
+
+    if numel(jumps)>0
+        % plot in segments around discontinuities
+        % plot first segment:
+        inds = 1:jumps(1);
+        plot(trajectory.timepts(inds),heading(inds),'color',plotParams.cTraj,'linewidth',plotParams.lw);hold on;
+        for i=2:numel(jumps)
+            % plot intermediate segments:
+            inds = jumps(i-1)+1:jumps(i);
+            plot(trajectory.timepts(inds),heading(inds),'color',plotParams.cTraj,'linewidth',plotParams.lw)
+        end
+    
+        % plot final segment
+        inds = jumps(end)+1:numel(heading);
+        plot(trajectory.timepts(inds),heading(inds),'color',plotParams.cTraj,'linewidth',plotParams.lw)
+    else
+        % plot entire trajectory
+        plot(trajectory.timepts,heading,'color',plotParams.cTraj,'linewidth',plotParams.lw);hold on;
+    end
+
+    % set bounds
     ymin = -pi;
     ymax = pi;
+
 else
     error('unrecognized control parameter type')
 end
