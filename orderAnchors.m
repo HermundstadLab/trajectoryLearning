@@ -7,7 +7,7 @@ function anchorsOrdered = orderAnchors(anchors,planner)
 %   input structure 'anchors'), and returns a set of ordered anchors, 
 %   ordered according the ordering specified by the 'planner' structure.
 %
-%   See also: PLANTRAJECTORY, OPTIMIZETRAJECTORY
+%   See also: MERGEANCHORS, PLANTRAJECTORY, OPTIMIZETRAJECTORY
 
 nAnchors    = anchors.N;                                % number of anchors to order                      
 nAnchorsMax = 5;                                        % number of anchors whose orderings
@@ -90,16 +90,7 @@ else
     error('unrecognized anchor ordering')
 end
 
-
 %  remove anchors within minimal distance of one another   
-[~,allDists] = dpol(anchorsOrdered.thCoords,anchorsOrdered.rCoords); 
-while any(allDists<planner.tol_merge)
-    irem = find(allDists<planner.tol_merge,1,'first');
-    anchorsOrdered.thCoords(irem) = [];
-    anchorsOrdered.rCoords( irem) = [];
-    anchorsOrdered.thTol(   irem) = [];
-    anchorsOrdered.rTol(    irem) = [];
-    [~,allDists] = dpol(anchorsOrdered.thCoords,anchorsOrdered.rCoords); 
-end
-anchorsOrdered.N = numel(anchorsOrdered.thCoords);
+anchorsOrdered = mergeAnchors(anchorsOrdered,planner);
+
 end
