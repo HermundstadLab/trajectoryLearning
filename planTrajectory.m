@@ -13,6 +13,11 @@ function trajectory = planTrajectory(anchors,phi,planner)
 [x0,y0] = pol2cart(anchors.thCoords(1),anchors.rCoords(1));
 dth0    = 0;
 
+% store anchors and initial heading
+trajectory.anchors         = anchors;
+trajectory.phi             = phi;
+
+% initialize trajectory properties
 trajectory.prevAnchor = [];
 trajectory.xCoords    = [];
 trajectory.yCoords    = [];
@@ -70,7 +75,5 @@ for i=2:anchors.N
     tAnchors = [tAnchors,t0];
 end
 
-trajectory.anchors         = anchors;
 trajectory.anchors.timepts = tAnchors;
-trajectory.phi             = phi;
 end
