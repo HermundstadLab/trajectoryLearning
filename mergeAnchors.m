@@ -1,4 +1,4 @@
-function anchorsTrimmed = mergeAnchors(anchors,planner)
+function anchorsMerged = mergeAnchors(anchors,planner)
 % MERGEANCHORS Determines an ordering for anchors that will be used to
 % generate a curvilinear trajectory.
 %
@@ -12,17 +12,28 @@ function anchorsTrimmed = mergeAnchors(anchors,planner)
 %   See also: ORDERANCHORS
 
 % define new structure for merged anchors
-anchorsTrimmed = anchors;
+anchorsMerged = anchors;
 
-[~,allDists] = dpol(anchorsTrimmed.thCoords,anchorsTrimmed.rCoords); 
+[~,allDists] = dpol(anchorsMerged.thCoords,anchorsMerged.rCoords); 
 while any(allDists<planner.tol_merge)
     irem = find(allDists<planner.tol_merge,1,'first');
-    anchorsTrimmed.thCoords(irem) = [];
-    anchorsTrimmed.rCoords( irem) = [];
-    anchorsTrimmed.thTol(   irem) = [];
-    anchorsTrimmed.rTol(    irem) = [];
-    [~,allDists] = dpol(anchorsTrimmed.thCoords,anchorsTrimmed.rCoords); 
+
+    % if the pair of anchors to be merged involve the first anchor, remove 
+    % th second of the two anchors, rather than the first; otherwise,
+    % remove the first of the two anchors:
+    if irem==1
+        irem = irem+1;
+    end
+    anchorsMerged.thCoords(irem) = [];
+    anchorsMerged.rCoords( irem) = [];
+    anchorsMerged.thTol(   irem) = [];
+    anchorsMerged.rTol(    irem) = [];
+    [~,allDists] = dpol(anchorsMerged.thCoords,anchorsMerged.rCoords); 
 end
-anchorsTrimmed.N = numel(anchorsTrimmed.thCoords);
+anchorsMerged.N = numel(anchorsMerged.thCoords);
+
+if anchorsMerged.N<3
+    error('merged all anchors; only home port remains')
+end
 
 end

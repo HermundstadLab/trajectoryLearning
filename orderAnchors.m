@@ -90,7 +90,4 @@ else
     error('unrecognized anchor ordering')
 end
 
-%  remove anchors within minimal distance of one another   
-anchorsOrdered = mergeAnchors(anchorsOrdered,planner);
-
 end
