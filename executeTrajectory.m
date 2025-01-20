@@ -21,9 +21,6 @@ function executedTrajectory = executeTrajectory(trajectory,arena,trial,planner,t
 entrances = find(diff(obstacleVec)>0);
 exits     = find(diff(obstacleVec)<0)+1;
 
-% remove cases where the agent nicks the corner of an obstacle
-%START HERE
-
 % specify entry angles of obstable boundaries, indexed by:
 % boundary ID: 1:bottom; 2:right; 3:top; 4:left (rows of array)
 % orientation: 1:CW; 2:CCW (columns of array)
@@ -78,7 +75,7 @@ for i=1:numel(entrances)
         trajectory.anchors.rCoords(nextAnchorID));
 
     % if next anchor is within the obstacle, select the subsequent anchor
-    if intersectTrajectory(xAnchor,yAnchor,trial.obstacle.xBounds(blockID,:),trial.obstacle.yBounds(blockID,:))
+    while intersectTrajectory(xAnchor,yAnchor,trial.obstacle.xBounds(blockID,:),trial.obstacle.yBounds(blockID,:))
         nextAnchorID = nextAnchorID+1;
         [xAnchor,yAnchor] = pol2cart(trajectory.anchors.thCoords(nextAnchorID),...
             trajectory.anchors.rCoords(nextAnchorID));
@@ -92,10 +89,6 @@ for i=1:numel(entrances)
     [~,indExposed,~] = intersect([xBoundary',yBoundary'],...
         [xExposedFace',yExposedFace'],'rows','stable');
 
-    % compute velocity along boundary (to be stored below)
-    boundaryVelocity = max([abs(xBoundary(1:2)),...
-        abs(diff(yBoundary(1:2)))]).*planner.nInterp;
-
     % extract index of next anchor point
     nextAnchorIndex = find(trajectory.prevAnchor==nextAnchorID,1,'first');
 
@@ -103,22 +96,21 @@ for i=1:numel(entrances)
     % is not contained in the set of boundaries that the agent traverses
     % along its diverted trajectory, assume the agent executes the entire
     % diverted trajectory until it reaches its original exit point from
-    % the obstacle
-    
+    % the obstacle  
     if ismember(boundaryID,exposedFaceID) || numel(indExposed)==0
-        inds = 1:numel(xBoundary);
-        trajDivertedBoundary.prevAnchor = prevAnchorID.*ones(size(inds));
+        indsTrajBound = 1:numel(xBoundary);
+        trajDivertedBoundary.prevAnchor = prevAnchorID.*ones(size(indsTrajBound));
         trajDivertedBoundary.xCoords    = xBoundary;
         trajDivertedBoundary.yCoords    = yBoundary;
-        trajDivertedBoundary.velocity   = boundaryVelocity.*ones(size(inds));
+        trajDivertedBoundary.velocity   = planner.boundaryVelocity.*ones(size(indsTrajBound));
         trajDivertedBoundary.heading    = heading;
 
-        inds = exits(i)+1:nextAnchorIndex;
-        trajDivertedOpen.prevAnchor     = prevAnchorID.*ones(size(inds));
-        trajDivertedOpen.xCoords        = trajectory.xCoords( inds);
-        trajDivertedOpen.yCoords        = trajectory.yCoords( inds);
-        trajDivertedOpen.velocity       = trajectory.velocity(inds);
-        trajDivertedOpen.heading        = trajectory.heading( inds);
+        indsTrajOpen = exits(i)+1:nextAnchorIndex;
+        trajDivertedOpen.prevAnchor     = prevAnchorID.*ones(size(indsTrajOpen));
+        trajDivertedOpen.xCoords        = trajectory.xCoords(     indsTrajOpen);
+        trajDivertedOpen.yCoords        = trajectory.yCoords(     indsTrajOpen);
+        trajDivertedOpen.velocity       = trajectory.velocity(    indsTrajOpen);
+        trajDivertedOpen.heading        = trajectory.heading(     indsTrajOpen);
 
     % otherwise, assume the agent travels around obstacle boundary until it
     % can peel away toward next anchor point
@@ -127,24 +119,29 @@ for i=1:numel(entrances)
         % generate the first portion of the diverted trajectory by moving at 
         % an approximately constant speed around the unexposed portion of the 
         % obstacle:
-        inds = 1:indExposed(1);
-        trajDivertedBoundary.prevAnchor = prevAnchorID.*ones(size(inds));
-        trajDivertedBoundary.xCoords    = xBoundary(inds);
-        trajDivertedBoundary.yCoords    = yBoundary(inds);
-        trajDivertedBoundary.velocity   = boundaryVelocity.*ones(size(inds));
-        trajDivertedBoundary.heading    = heading(inds);
+        indsTrajBound = 1:indExposed(1)-1;
+        trajDivertedBoundary.prevAnchor = prevAnchorID.*ones(1,max(1,numel(indsTrajBound)));
+        trajDivertedBoundary.xCoords    = xBoundary(indsTrajBound);
+        trajDivertedBoundary.yCoords    = yBoundary(indsTrajBound);
+        trajDivertedBoundary.velocity   = planner.boundaryVelocity.*ones(size(indsTrajBound));
+        trajDivertedBoundary.heading    = heading(indsTrajBound);
 
         % once trajectory reaches the first exposed corner of the obstacle,
         % use the corner as an anchor point, and generate a standard trajectory 
         % segment to the next (i.e., the original) anchor point:
-        [anchors.thCoords,anchors.rCoords] = cart2pol(xBoundary(indExposed(1)+1),yBoundary(indExposed(1)+1));
+        [anchors.thCoords,anchors.rCoords] = cart2pol(xBoundary(indExposed(1)),yBoundary(indExposed(1)));
         anchors.thCoords = [anchors.thCoords,trajectory.anchors.thCoords(nextAnchorID)];
         anchors.rCoords  = [anchors.rCoords, trajectory.anchors.rCoords( nextAnchorID)];
+        anchors.N = numel(anchors.thCoords);
     
         % choose initial heading such that agent initially follows obstacle 
         % boundary before peeling away; if this generates a large discontinuity
         % in heading at next anchor point, choose the negative of this heading. 
-        nextBoundaryHeading = heading(inds(end)+1);
+        if numel(indsTrajBound)<1
+            nextBoundaryHeading = heading(1);
+        else
+            nextBoundaryHeading = heading(indsTrajBound(end)+1);
+        end
         [dth,~] = dpol(anchors.thCoords,anchors.rCoords);
         phi = nextBoundaryHeading-dth+pi/2;
         phiSet = [phi,-phi];
@@ -164,7 +161,7 @@ for i=1:numel(entrances)
             phi = phiSet(indMin);
         end
        
-        trajDivertedOpen = planTrajectory(anchors,phi,planner);
+        trajDivertedOpen            = planTrajectory(anchors,phi,planner);
         trajDivertedOpen.prevAnchor = trajDivertedOpen.prevAnchor+prevAnchorID-1;
     end
 
@@ -177,7 +174,28 @@ end
 % insert diverted trajectory segments into planned trajectory
 trajFields = {'prevAnchor','xCoords','yCoords','velocity','heading'};
 if numel(entrances)>0
-    % store trajectory segment until first intersection with obstacle
+
+    % remove any anchor points that fell within the obstacle:
+    [anchor_xCoords,anchor_yCoords] = pol2cart(trajectory.anchors.thCoords,trajectory.anchors.rCoords);
+    [~,anchorVec,~] = intersectTrajectory(anchor_xCoords,anchor_yCoords,...
+        trial.obstacle.xBounds(trial.blockIDs(trialID),:),...
+        trial.obstacle.yBounds(trial.blockIDs(trialID),:));
+    irem = find(anchorVec);
+    anchorFields = {'thCoords','rCoords','thTol','rTol'};
+    if numel(irem)>0
+        for i=1:numel(anchorFields)
+            trajectory.anchors.(anchorFields{i})(irem) = [];
+        end
+    end
+    trajectory.anchors.N = numel(trajectory.anchors.thCoords);
+
+    % store anchors and initial heading:
+    executedTrajectory.anchors  = trajectory.anchors;
+    executedTrajectory.phi      = trajectory.phi;
+
+
+    % store trajectory segment until first intersection with obstacle;
+    % update and store timepoints separately
     for i=1:numel(trajFields)
         executedTrajectory.(trajFields{i}) = trajectory.(trajFields{i})(1:entrances(1)-1);
     end
@@ -206,12 +224,9 @@ if numel(entrances)>0
             openSegments{end}.(trajFields{i}),...
             trajectory.(trajFields{i})(nextAnchorIndex:numel(trajectory.(trajFields{i})))];
     end
-
-    % store remaining fields:
-    trajFields = {'amplitude','offset','anchors'};
-    for i=1:numel(trajFields)
-        executedTrajectory.(trajFields{i}) = trajectory.(trajFields{i});
-    end
+    
+    % compute & store curvilinear distance along trajectory:
+    executedTrajectory.distance = dcart(executedTrajectory.xCoords,executedTrajectory.yCoords);
 
 else
     executedTrajectory = trajectory;
