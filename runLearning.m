@@ -15,10 +15,11 @@ errormap     = belief.mask.*zeros(belief.np,belief.np);
 
 
 %--------------------- initialize storage variables ----------------------%
-[likelihoods,posteriors,errormaps] = deal(nan(belief.np,belief.np,trial.nTrials));   
-[traj_executed,traj_planned]       = deal(cell(1,trial.nTrials));
+[likelihoods,posteriors,errormaps]  = deal(nan(belief.np,belief.np,trial.nTrials));   
+[traj_executed,traj_planned]        = deal(cell(1,trial.nTrials));
 [outcome,reward,probOutcome,...
-    probReward,cache]              = deal(nan(trial.nTrials,1));
+    probReward,nAnchors_executed,...
+    nAnchors_planned,cache]         = deal(nan(trial.nTrials,1));
     
 
 %------------------------- run learning algorithm ------------------------%
@@ -66,19 +67,26 @@ for trialID=1:trial.nTrials
     errormaps(  :,:,trialID) = errormap;
     
     % for planned trajectory, only store anchor points and initial heading 
-    % (sufficient to recover full planned trajectory)
+    % (sufficient to recover full planned trajectory); store number of
+    % anchors in an accessible field
     traj_planned{ trialID}.anchors = plannedTrajectory.anchors;
     traj_planned{ trialID}.phi     = plannedTrajectory.phi;
 
     % store full executed trajectory
     traj_executed{trialID} = executedTrajectory;
 
+    % store numbers of planned and executed anchors in accessible field
+    nAnchors_executed(trialID,1) = executedTrajectory.anchors.N;
+    nAnchors_planned( trialID,1) = plannedTrajectory.anchors.N;
+
 end
 
 %--------------------------- store results -----------------------------%
-simResults.trajectory.executed  = traj_executed;
-simResults.trajectory.planned   = traj_planned;
-simResults.trajectory.rewards   = reward;
+simResults.trajectory.executed         = traj_executed;
+simResults.trajectory.planned          = traj_planned;
+simResults.trajectory.nAnchorsExecuted = nAnchors_executed;
+simResults.trajectory.nAnchorsPlanned  = nAnchors_planned;
+simResults.trajectory.rewards          = reward;
 
 simResults.belief.prior         = uniformPrior;
 simResults.belief.likelihoods   = likelihoods;
