@@ -26,8 +26,8 @@ trajectory.heading    = [];
 trajectory.timepts    = [];
 trajectory.distance   = 0;
 
-t0 = 0;
-tAnchors = t0;
+dt = (1/planner.nInterp);
+
 for i=2:anchors.N
     
     % compute radial and angular distance between anchors
@@ -36,7 +36,12 @@ for i=2:anchors.N
     % scale execution time based on separation between anchors, requiring
     % at least two timepoints per segment
     T  = dr./planner.rScale; 
-    tt = linspace(0,T,max(2,floor(T*planner.nInterp)));
+    tt = 0:dt:T;
+
+    % if generating last segment of trajectory, append final timepoint 
+    if i==anchors.N && tt(end)<T
+       tt = [tt,T]; 
+    end
 
     % ensure initial offset is the same as final offset from last segment
     if i>2
@@ -61,19 +66,14 @@ for i=2:anchors.N
     trajectory.yCoords    = [trajectory.yCoords,   ytmp(isel,:)];
     trajectory.velocity   = [trajectory.velocity,  vtmp(isel,:)];
     trajectory.heading    = [trajectory.heading,   htmp(isel,:)];
-    trajectory.timepts    = [trajectory.timepts,   t0+tt       ];
     trajectory.distance   = trajectory.distance + dist(isel); 
 
     % update initial condition
     x0   = xtmp(isel,end);
     y0   = ytmp(isel,end);
-    t0   = t0+tt(end);
     dth0 = dth;
     phi0 = phi;
-
-    % update timing of anchor points
-    tAnchors = [tAnchors,t0];
+    
 end
 
-trajectory.anchors.timepts = tAnchors;
 end
