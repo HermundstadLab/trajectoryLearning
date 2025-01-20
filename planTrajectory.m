@@ -45,7 +45,7 @@ for i=2:anchors.N
 
     % ensure initial offset is the same as final offset from last segment
     if i>2
-        phi = pi-(dth-dth0)-phi0;
+        phi = wrapToPi(pi-(dth-dth0)-phi0);
     end
 
     % generate trajectory linking anchors; choose multiple of initial  
