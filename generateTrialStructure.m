@@ -98,9 +98,9 @@ for i=1:numel(xcTarget)
             xcObstacle(i),ycObstacle(i),obstacle.width,obstacle.height);
         obstacleMasks   = cat(3,obstacleMasks,obstacleMaskTmp);
     
-        % define bounds of target
-        xbObst = [xcTarget(i)-target.width/2, xcTarget(i)+target.width/2 ];
-        ybObst = [ycTarget(i)-target.height/2,ycTarget(i)+target.height/2];
+        % define bounds of obstacle
+        xbObst = [xcObstacle(i)-obstacle.width/2, xcObstacle(i)+obstacle.width/2 ];
+        ybObst = [ycObstacle(i)-obstacle.height/2,ycObstacle(i)+obstacle.height/2];
 
         % use bounds to extract full boundary (densely-sampled) around 
         % obstacle; this will be used for planning constant-velocity 
