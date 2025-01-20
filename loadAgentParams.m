@@ -44,8 +44,10 @@ if strcmp(agentType,'default')
     planner.tol_shift   = 0.005;                            % tolerance for shifting anchors (n.u.)
     planner.thTol_shift = planner.tol_shift*belief.size(1); % default angular tolerance for shifting anchors (a.u.)
     planner.rTol_shift  = planner.tol_shift*belief.size(2); % default radial tolerance for shifting anchors (a.u.)
-    planner.nxObstacle  = 4*belief.np;                      % number of spatial points per unit length used
-                                                            %   to interpolate obstacle boundaries
+    planner.nxObstacle  = 4*belief.np;                      % number of spatial points per unit length used to
+                                                            %   interpolate obstacle boundaries (sets boundary velocity)
+    planner.boundaryVelocity = planner.nInterp./...         % velocity at which agent moves along obstacle boundaries
+        (planner.nxObstacle-1);                             
     planner.scaleTol    = true;                             % determines whether to scale tolerances around individual anchors 
                                                             % options: true (scale tolerances based on width of posterior peaks)
                                                             %          false (used fixed tolerance for all anchors)
