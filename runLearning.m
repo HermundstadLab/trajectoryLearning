@@ -19,7 +19,8 @@ errormap     = belief.mask.*zeros(belief.np,belief.np);
 [traj_executed,traj_planned]        = deal(cell(1,trial.nTrials));
 [outcome,reward,probOutcome,...
     probReward,nAnchors_executed,...
-    nAnchors_planned,cache]         = deal(nan(trial.nTrials,1));
+    nAnchors_planned,cache,...
+    obstacleHit]                    = deal(nan(trial.nTrials,1));
     
 
 %------------------------- run learning algorithm ------------------------%
@@ -39,7 +40,7 @@ for trialID=1:trial.nTrials
     plannedTrajectory = evaluateTrajectory(plannedTrajectory,errormap,belief,sampler,planner);
 
     % execute trajectory; adjust based on arena boundaries and obstacles
-    executedTrajectory = executeTrajectory(plannedTrajectory,arena,trial,planner,trialID);
+    [executedTrajectory,obstacleHit(trialID)] = executeTrajectory(plannedTrajectory,arena,trial,planner,trialID);
 
     % use planned and executed trajectories to compute  likelihood
     plannedLikelihood  = getLikelihood(plannedTrajectory, belief);
@@ -87,10 +88,12 @@ simResults.trajectory.planned          = traj_planned;
 simResults.trajectory.nAnchorsExecuted = nAnchors_executed;
 simResults.trajectory.nAnchorsPlanned  = nAnchors_planned;
 simResults.trajectory.rewards          = reward;
+simResults.trajectory.obstacleHits     = obstacleHit;
 
 simResults.belief.prior         = uniformPrior;
 simResults.belief.likelihoods   = likelihoods;
 simResults.belief.posteriors    = posteriors;
+simResults.belief.errormaps     = errormaps;
 simResults.belief.cacheSignal   = cacheSignal;
 simResults.belief.probReward    = probReward;
 simResults.belief.cache         = cache;

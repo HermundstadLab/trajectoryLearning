@@ -1,4 +1,4 @@
-function executedTrajectory = executeTrajectory(trajectory,arena,trial,planner,trialID)
+function [executedTrajectory,obstacleHit] = executeTrajectory(trajectory,arena,trial,planner,trialID)
 % EXECUTETRAJECTORY Execute planned trajectory, accounting for arena
 % boundaries and obstacles.
 %
@@ -12,8 +12,9 @@ function executedTrajectory = executeTrajectory(trajectory,arena,trial,planner,t
 %   See also: PLANTRAJECTORY
 
 
-% determine portions of trajectory that pass through obstacle
-[~,obstacleVec,~] = intersectTrajectory(trajectory.xCoords,trajectory.yCoords,...
+% determine whether trajectory passed through obstacle ('obstacleHit'), 
+% and if so, which portions of the trajectory were affected ('obstacleVec')
+[obstacleHit,obstacleVec,~] = intersectTrajectory(trajectory.xCoords,trajectory.yCoords,...
     trial.obstacle.xBounds(trial.blockIDs(trialID),:),...
     trial.obstacle.yBounds(trial.blockIDs(trialID),:));
 
