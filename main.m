@@ -42,6 +42,7 @@ addpath("auxiliaryFunctions/","auxiliaryFunctions/peaks2/","plottingFunctions/")
 % environment, agent, and trial protocol are respectively stored in 
 % 'loadEnvironmentParams','loadAgentParams', and 'loadTrialParams'.
 
+clear all;
 
 % load plotting parameters
 %   current options: 'whiteBG'
@@ -52,7 +53,7 @@ plotParams = loadPlotParams(plotType);
 % NOTE: the following functions build upon one another, and must be called 
 % in order.
 
-% generate agent and environment
+% generate environment
 %   current options: 'default'
 envType = 'default';
 [arenaParams,targetParams,obstacleParams] = loadEnvironmentParams(envType);
@@ -61,11 +62,12 @@ envType = 'default';
 % generate agent
 %   current options: 'default'
 agentType = 'default';
-[belief,sampler,planner] = loadAgentParams(agentType,belief);
+agentParams = loadAgentParams(agentType);
+[belief,sampler,planner] = generateAgent(belief,agentParams);
 
 % generate trial protocol
 %   current options: 'singleTarget', 'multiTarget', 'obstacle'
-exptType = 'singleTarget';
+exptType = 'obstacle';
 trialParams = loadTrialParams(exptType);
 trial = generateTrialStructure(arena,target,obstacle,planner,trialParams);
 
@@ -88,12 +90,19 @@ plotSingleTrial(agent.simResults,agent.arena,agent.belief,agent.trial,trialID,pl
 nAgents    = 50;
 rewardRate = [];
 pReward    = [];
+surprise   = [];
+nAnchors   = [];
+cache      = [];
 
 parfor i=1:nAgents
     disp(['running agent ',num2str(i)]);
     simResults = runLearning(arena,belief,sampler,planner,trial);
-    rewardRate = [rewardRate, simResults.trajectory.rewards ];     
+    rewardRate = [rewardRate, simResults.trajectory.rewards         ]; 
+    nAnchors   = [nAnchors,   simResults.trajectory.nAnchorsPlanned ];
+   
     pReward    = [pReward,    simResults.belief.probReward  ];
+    surprise   = [surprise,   simResults.belief.cacheSignal ];     
+    cache      = [cache,      simResults.belief.cache       ];     
 end
 
 
