@@ -5,6 +5,8 @@ function traj = boundTrajectory(traj,xBounds,yBounds)
 %   traj = BOUNDTRAJECTORY(traj,xBounds,yBounds) takes as input a trajectory
 %   and set of bounds defined in cartesian coordinates, returns a trajectory
 %   that is constrained within those bounds.
+%
+%   See also: INTERSECTTRAJECTORY
 
 traj.xCoords(traj.xCoords<xBounds(1)) = xBounds(1);
 traj.xCoords(traj.xCoords>xBounds(2)) = xBounds(2);
