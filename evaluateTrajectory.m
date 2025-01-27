@@ -1,6 +1,7 @@
 function plannedTrajectory = evaluateTrajectory(trajectory,errormap,belief,sampler,planner)
 % EVALUATETRAJECTORY Determine whether planned trajectory is likely to 
 % intercept an obstacle, and readjust if necessary.
+%
 %   plannedTrajectory = EVALUATETRAJECTORY(trajectory,errormap,belief,...
 %   sampler,planner) takes as input a planned trajectory and a previously
 %   evaluated errormap to determine whether the planned trajectory is
@@ -24,7 +25,7 @@ predError = min(errormap(lininds));
 % if error exceeds threshold, augment the set of anchor points by sampling
 % from the errormap, and plan a new trajectory
 if predError<sampler.errorThreshold
-    %sample new 'augmenting' set of anchor points from the errormap
+    % sample new 'augmenting' set of anchor points from the errormap
     anchorsAug = sampleAnchors(errormap,belief,sampler,planner);
 
     % remove home port from existing set of anchor points, and augment 
