@@ -23,7 +23,7 @@ if strcmp(envType,'default')
     obstacleParams.relativeWidth = 0.4;         % width of obstacle, relative to arena
     obstacleParams.aspectRatio   = 0.25;        % aspect ratio of obstacle (height relative to width)
 
-%elseif strcmp(envType,'new env type')          %uncomment to add new environments
+%elseif strcmp(envType,'new env type')          % uncomment to add new environments
 else
     error('unrecognized environment type')
 end
