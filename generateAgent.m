@@ -49,11 +49,12 @@ planner.nInterp        = agentParams.timeInterp;                    % number of 
 planner.rScale         = belief.size(2)./2;                         % used to scale the execution time of trajectory segments
                                                                     %   (defined in units of distance per time)
 
+planner.tol_shift      = agentParams.anchorTolShift;                % default tolerance for shifting anchors                                                                    
 planner.thTol_shift    = agentParams.anchorTolShift*belief.size(1); % default angular tolerance for shifting anchors (a.u.)
 planner.rTol_shift     = agentParams.anchorTolShift*belief.size(2); % default radial tolerance for shifting anchors (a.u.)
-planner.nxObstacle     = agentParams.spaceInterp;                   % number of spatial points per unit length used to
+planner.nxObstacle     = floor(agentParams.spaceInterp*belief.np);  % number of spatial points per unit length used to
                                                                     %   interpolate obstacle boundaries (sets boundary velocity)
-planner.boundaryVelocity = 1./planner.nxObstacle;                   % velocity at which agent moves along obstacle boundaries
+planner.boundaryVelocity = 1./agentParams.spaceInterp;              % velocity at which agent moves along obstacle boundaries
                                                                     %   (this should be sufficiently fast; will o/w burn obstacle boundary into posterior)
 planner.scaleTol       = agentParams.anchorTolScaling;              % determines whether to scale tolerances around individual anchors 
 planner.orderType      = agentParams.anchorOrderMethod;             % type of ordering to use for anchor points; 
