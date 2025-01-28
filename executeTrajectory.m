@@ -15,8 +15,8 @@ function [executedTrajectory,obstacleHit] = executeTrajectory(trajectory,arena,t
 
 % determine whether trajectory passed through obstacle
 obstacleHit = intersectTrajectory(trajectory.xCoords,trajectory.yCoords,...
-    trial.obstacle.xBoundsTrue(trial.blockIDs(trialID),:),...
-    trial.obstacle.yBoundsTrue(trial.blockIDs(trialID),:));
+    trial.obstacle.xBounds(trial.blockIDs(trialID),:),...
+    trial.obstacle.yBounds(trial.blockIDs(trialID),:));
 
 % trajectory passed through obstacle, divert trajectory around it
 if obstacleHit

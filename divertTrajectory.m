@@ -10,11 +10,16 @@ function executedTrajectory = divertTrajectory(trajectory,trial,planner,trialID)
 %
 %   See also: PLANTRAJECTORY, BOUNDTRAJECTORY, EXECUTETRAJECTORY
 
+% extract agent's view of obstacle
+agentView = trial.obstacle.agent;
+
+% extract block ID
+blockID = trial.blockIDs(trialID);
 
 % determine which portions of the trajectory were affected by obstacle ('obstacleVec')
 [~,obstacleVec,~] = intersectTrajectory(trajectory.xCoords,trajectory.yCoords,...
-    trial.obstacle.xBounds(trial.blockIDs(trialID),:),...
-    trial.obstacle.yBounds(trial.blockIDs(trialID),:));
+    agentView.xBounds(blockID,:),...
+    agentView.yBounds(blockID,:));
 
 % find timepoints when trajectory enters and exits obstacle
 entrances = find(diff(obstacleVec)>0);
@@ -34,7 +39,6 @@ angles = [[0, pi,   ];...
 boundarySegments = {};
 openSegments     = {};
 
-blockID = trial.blockIDs(trialID);
 for i=1:numel(entrances)
     
     % extract segment of trajectory that passes through obstacle
@@ -45,17 +49,17 @@ for i=1:numel(entrances)
 
     % determine which obstacle boundary the trajectory entered:
     % 1:bottom; 2:right; 3:top; 4:left
-    [~,indStart] = min( abs(xseg(1)-trial.obstacle.xBoundary(blockID,:)) ...
-        + abs(yseg(1)-trial.obstacle.yBoundary(blockID,:)) );
-    boundaryID   = find(histcounts(indStart,trial.obstacle.indCorners(blockID,:)));
+    [~,indStart] = min( abs(xseg(1)-agentView.xBoundary(blockID,:)) ...
+        + abs(yseg(1)-agentView.yBoundary(blockID,:)) );
+    boundaryID   = find(histcounts(indStart,agentView.indCorners(blockID,:)));
 
     % determine the travel direction that minimizes the change in heading
     [~,orientation] = min(abs(hseg(1) - angles(boundaryID,:)));
 
     % extract oriented segment of boundary along which trajectory will be diverted
-    xBoundary  = circshift(trial.obstacle.xBoundary(blockID,:),numel(trial.obstacle.xBoundary(blockID,:))-indStart+1);
-    yBoundary  = circshift(trial.obstacle.yBoundary(blockID,:),numel(trial.obstacle.yBoundary(blockID,:))-indStart+1);
-    heading    = circshift(trial.obstacle.heading(blockID,:),  numel(trial.obstacle.heading(  blockID,:))-indStart+1);
+    xBoundary  = circshift(agentView.xBoundary(blockID,:),numel(agentView.xBoundary(blockID,:))-indStart+1);
+    yBoundary  = circshift(agentView.yBoundary(blockID,:),numel(agentView.yBoundary(blockID,:))-indStart+1);
+    heading    = circshift(agentView.heading(blockID,:),  numel(agentView.heading(  blockID,:))-indStart+1);
     if orientation>1
         xBoundary = fliplr(xBoundary);
         yBoundary = fliplr(yBoundary);
@@ -74,14 +78,14 @@ for i=1:numel(entrances)
         trajectory.anchors.rCoords(nextAnchorID));
 
     % if next anchor is within the obstacle, select the subsequent anchor
-    while intersectTrajectory(xAnchor,yAnchor,trial.obstacle.xBounds(blockID,:),trial.obstacle.yBounds(blockID,:))
+    while intersectTrajectory(xAnchor,yAnchor,agentView.xBounds(blockID,:),agentView.yBounds(blockID,:))
         nextAnchorID = nextAnchorID+1;
         [xAnchor,yAnchor] = pol2cart(trajectory.anchors.thCoords(nextAnchorID),...
             trajectory.anchors.rCoords(nextAnchorID));
     end
 
     % extract the obstacle faces that are exposed to the anchor point
-    [xExposedFace,yExposedFace,exposedFaceID] = getSolidAngle(trial,trialID,xAnchor,yAnchor);
+    [xExposedFace,yExposedFace,exposedFaceID] = getSolidAngle(agentView,blockID,xAnchor,yAnchor);
 
     % find the point along the boundary segment that first intersects the
     % exposed faces of the obstacle (the first entry in 'indExposed')
@@ -177,8 +181,8 @@ if numel(entrances)>0
     % remove any anchor points that fell within the obstacle:
     [anchor_xCoords,anchor_yCoords] = pol2cart(trajectory.anchors.thCoords,trajectory.anchors.rCoords);
     [~,anchorVec,~] = intersectTrajectory(anchor_xCoords,anchor_yCoords,...
-        trial.obstacle.xBounds(trial.blockIDs(trialID),:),...
-        trial.obstacle.yBounds(trial.blockIDs(trialID),:));
+        agentView.xBounds(trial.blockIDs(trialID),:),...
+        agentView.yBounds(trial.blockIDs(trialID),:));
     irem = find(anchorVec);
     anchorFields = {'thCoords','rCoords','thTol','rTol'};
     if numel(irem)>0
@@ -233,17 +237,17 @@ end
 
 end
 
-function [xFace,yFace,exposedFaceID] = getSolidAngle(trial,trialID,xAnchor,yAnchor)
+function [xFace,yFace,exposedFaceID] = getSolidAngle(agentView,blockID,xAnchor,yAnchor)
 % identifies the region of an obstacle that is visible from an anchor point
 xFace = [];
 yFace = [];
 for i=1:4
     exposedFace(i) = intersectTrajectory(xAnchor,yAnchor,...
-        trial.obstacle.block(trial.blockIDs(trialID)).region(i).xBounds,...
-        trial.obstacle.block(trial.blockIDs(trialID)).region(i).yBounds);
+        agentView.block(blockID).region(i).xBounds,...
+        agentView.block(blockID).region(i).yBounds);
     if exposedFace(i)
-        xFace = [xFace,trial.obstacle.block(trial.blockIDs(trialID)).region(i).xBoundary];
-        yFace = [yFace,trial.obstacle.block(trial.blockIDs(trialID)).region(i).yBoundary];
+        xFace = [xFace,agentView.block(blockID).region(i).xBoundary];
+        yFace = [yFace,agentView.block(blockID).region(i).yBoundary];
     end
 end
 exposedFaceID = find(exposedFace>0);
