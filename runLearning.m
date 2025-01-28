@@ -42,7 +42,7 @@ for trialID=1:trial.nTrials
     % execute trajectory; adjust based on arena boundaries and obstacles
     [executedTrajectory,obstacleHit(trialID)] = executeTrajectory(plannedTrajectory,arena,trial,planner,trialID);
 
-    % use planned and executed trajectories to compute  likelihood
+    % use planned and executed trajectories to compute likelihood
     plannedLikelihood  = getLikelihood(plannedTrajectory, belief);
     executedLikelihood = getLikelihood(executedTrajectory,belief);
 
