@@ -1,15 +1,16 @@
-function anchors = sampleAnchors(map,belief,sampler,planner,frac)
+function [anchors,peaks] = sampleAnchors(map,belief,sampler,planner,frac)
 % SAMPLEANCHORS Sample anchor points from a probability distribution.
 %
-%   anchors = SAMPLEANCHORS(map,belief,sampler,planner,frac) finds peaks 
-%   in a 2D landscape ('map') that are of a min height and separation 
+%   [anchors,peaks] = SAMPLEANCHORS(map,belief,sampler,planner,frac) finds 
+%   peaks in a 2D landscape ('map') that are of a min height and separation 
 %   (as specified in the 'belief' structure'). It then selects the minimum
 %   subset of these peaks that cover a fraction 'frac' of their summed
 %   values; this subset will be returned as sampled anchor points. If there
 %   are no peaks in the map, this function randomly samples the maximum 
 %   number of allowed peaks (as specified in the 'sampler' structure). The 
 %   polar coordinates of these anchors are returned in the output structure 
-%   'anchors'.  
+%   'anchors'; the polar coordinates of all peaks are returned in the 
+%   output structure 'peaks'.
 %
 %   See also: PEAKS2
 
@@ -25,6 +26,11 @@ mapTmp(isnan(mapTmp)) = 0;                  % remove nans for sampling (allow bo
     'MinPeakDistance',sampler.minPeakDist,...
     'MinPeakHeight',sampler.minPeakHeight);     
 [pkssort,indsort] = sort(pks,'descend');
+
+% extract coordinates of all anchors
+peaks.thCoords = belief.thAxes(locs_th(indsort));                                          
+peaks.rCoords  = belief.rAxes( locs_r(indsort)); 
+peaks.values   = pkssort./sum(pkssort);
 
 if numel(pks)<1
     % if there are no peaks in the map, randomly sample the maximum number of anchors
@@ -46,7 +52,7 @@ else
     
     % if there are peaks in the map, choose the smallest number of peaks
     % that cover half of the total peak probability mass
-    nk = find(cumsum(pkssort./sum(pkssort))>=frac,1,'first');
+    nk = find(cumsum(peaks.values)>=frac,1,'first');
 
     % select top peaks to be anchor points
     indsel = indsort(1:nk);                                           
@@ -62,6 +68,8 @@ else
     anchors.rTol  = sigma.*belief.size(2);
     anchors.thTol = sigma.*belief.size(1);
 end
+
+peaks.N = nk;
 
 % remove any zero-amplitude anchors
 indrem = find(anchors.rCoords==0);                                               
