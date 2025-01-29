@@ -67,9 +67,9 @@ agentParams = loadAgentParams(agentType);
 
 % generate trial protocol
 %   current options: 'singleTarget', 'multiTarget', 'obstacle'
-exptType = 'obstacle';
+exptType = 'singleTarget';
 trialParams = loadTrialParams(exptType);
-trial = generateTrialStructure(arena,target,obstacle,planner,trialParams);
+trial = generateTrialStructure(arena,target,obstacle,planner,agentParams,trialParams);
 
 
 %% load or simulate a single agent and plot results from a single trial
