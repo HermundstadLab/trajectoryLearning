@@ -153,7 +153,14 @@ for i=1:numel(xcTarget)
         boundarySides_agent{i} = indSides_agent;
 
     else
-        npBoundary = 2*(floor(planner.nxObstacle.*diff(ybObst_agent))+floor(planner.nxObstacle.*diff(xbObst_agent)));
+        % store bounds and boundaries
+        npBoundary = 2*(floor(planner.nxObstacle.*obstacle.width)+floor(planner.nxObstacle.*obstacle.height));
+
+        xBoundsObst   = [xBoundsObst;    nan(1,2)         ];
+        yBoundsObst   = [yBoundsObst;    nan(1,2)         ];
+        xBoundaryObst = [xBoundaryObst;  nan(1,npBoundary)];
+        yBoundaryObst = [yBoundaryObst;  nan(1,npBoundary)];
+
         xBoundsObst_agent      = [xBoundsObst_agent;     nan(1,2)         ];
         yBoundsObst_agent      = [yBoundsObst_agent;     nan(1,2)         ];
         xBoundaryObst_agent    = [xBoundaryObst_agent;   nan(1,npBoundary)];
