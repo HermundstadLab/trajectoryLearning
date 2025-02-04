@@ -30,16 +30,22 @@ omega =  (2*pi      )./T;
 delta = phi+dth-pi/2;
 
 % generate speed and heading over time
-A = (-dr.*m.*alpha.*beta)./(2.*omega.^2.*cos(phi));
-vtraj = A.*(1-cos(omega.*t));
+A = (-2.*dr.*alpha.*beta)./(omega.^2.*T.*sinc(m.*T/(2.*pi)));
+vtraj = (A/2).*(1-cos(omega.*t));
 htraj = m*t+delta;
 
 % generate cartesian trajectory (closed-form solution to the integrals
-% xtraj = cumsum(vtraj.*cos(htraj)) and ytraj = cumsum(vtraj.*sin(htraj))
-xtraj = -dr.*(2.*omega.^2.*sin(delta)+alpha.*(2.*beta.*sin(delta+m.*t)-m.*sin(delta+beta.*t))-m.*beta.*sin(delta+alpha.*t))./(4.*omega.^2.*cos(phi));
-ytraj =  dr.*(2.*omega.^2.*cos(delta)+alpha.*(2.*beta.*cos(delta+m.*t)-m.*cos(delta+beta.*t))-m.*beta.*cos(delta+alpha.*t))./(4.*omega.^2.*cos(phi));
+B  = -dr./(omega.^2.*T.*sinc(m.*T/(2*pi)));
+Cx =  alpha.*beta.*(cos(delta).*sinc(m.*t/pi)-sin(delta).*sin(m.*t./2).*sinc(m.*t./(2.*pi)));
+Cy =  alpha.*beta.*(sin(delta).*sinc(m.*t/pi)+cos(delta).*sin(m.*t./2).*sinc(m.*t./(2.*pi)));
+
+Dx =  m.*sin(delta) - (1./2).*(alpha.*sin(delta+beta.*t) + beta.*sin(delta+alpha.*t));
+Dy = -m.*cos(delta) + (1./2).*(alpha.*cos(delta+beta.*t) + beta.*cos(delta+alpha.*t));
+
+xtraj = B.*(Cx.*t + Dx);
+ytraj = B.*(Cy.*t + Dy);
 
 % compute curvilinear distance along trajectory
-d = abs(A.*T);
+d = abs(A.*T./2);
 
 end
