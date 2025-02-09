@@ -1,4 +1,4 @@
-function trial = generateTrialStructure(arena,target,obstacle,planner,agentParams,trialParams)
+function trial = generateTrialStructure(arena,target,obstacle,planner,trialParams)
 % GENERATETRIALSTRUCTURE Generate a structure that specifies the current
 % trial configuration.
 %
@@ -12,8 +12,8 @@ function trial = generateTrialStructure(arena,target,obstacle,planner,agentParam
 %   loadEnvironmentParams, generateEnvironment, loadAgentParams, and
 %   loadTrialParams must be run before running loadAgentParams.
 %
-%   See also: LOADENVIRONMENTPARAMS, GENERATEENVIRONMENT, LOADAGENTPARAMS,
-%               LOADTRIALPARAMS
+%   See also: LOADENVIRONMENTPARAMS, GENERATEAGENTENVIRONMENT, 
+%             LOADAGENTPARAMS, LOADTRIALPARAMS
 
 %---------------------- target arrangement -------------------------------%
 if strcmp(trialParams.targetArrangement,'radial')
@@ -56,7 +56,25 @@ else
 end
 
 
-%------------------------ block ID, masks --------------------------------%
+%----------------- extract agent's view of arena boundary ----------------%
+trial.arena.agent     = arena.agent;
+trial.arena.xBounds   = arena.xBounds;
+trial.arena.yBounds   = arena.yBounds;
+trial.arena.xBoundary = arena.xBoundary;
+trial.arena.yBoundary = arena.yBoundary;
+
+for i=1:4
+    trial.arena.agent.block(1).region(i).xBounds = arena.xBounds;
+    trial.arena.agent.block(1).region(i).yBounds = arena.yBounds;
+
+    inds = trial.arena.agent.indSides{i};
+    trial.arena.agent.block(1).region(i).xBoundary = trial.arena.agent.xBoundary(inds);
+    trial.arena.agent.block(1).region(i).yBoundary = trial.arena.agent.yBoundary(inds); 
+end
+
+
+
+%------------- initialize variables for targets & obstacles --------------%
 
 % initialize variables for target
 blockIDs        = [];
@@ -74,13 +92,14 @@ xBoundaryObst = [];
 yBoundaryObst = [];
 
 % initial variables for agent's view of obstacle
-xBoundsObst_agent     = [];
-yBoundsObst_agent     = [];
-xBoundaryObst_agent   = [];
-yBoundaryObst_agent   = [];
-hBoundaryObst_agent   = [];
-boundaryCorners_agent = [];
-boundarySides_agent   = cell(numel(xcTarget),1);
+xBoundsObst_agent       = [];
+yBoundsObst_agent       = [];
+xBoundaryObst_agent     = [];
+yBoundaryObst_agent     = [];
+hBoundaryObst_agent     = [];
+boundaryCornerIDs_agent = [];
+boundaryCorners_agent   = [];
+boundarySides_agent     = cell(numel(xcTarget),1);
 
 for i=1:numel(xcTarget)
 
@@ -96,7 +115,7 @@ for i=1:numel(xcTarget)
     ybTarget = [ycTarget(i)-target.height/2,ycTarget(i)+target.height/2];
 
     % use bounds to extract full boundary around target
-    [xbndryTarget,ybndryTarget] = getBoundary(xbTarget,ybTarget,arena.np);
+    [xbndryTarget,ybndryTarget] = getBoundary(xbTarget,ybTarget,4*arena.np);
 
     % store bounds and boundaries
     xBoundsTarget   = [xBoundsTarget;   xbTarget];
@@ -119,7 +138,7 @@ for i=1:numel(xcTarget)
 
         % extract full boundary around obstacle
         [xbndryObst,ybndryObst] = ...
-            getBoundary(xbObst,ybObst,arena.np);
+            getBoundary(xbObst,ybObst,4*arena.np);
     
         % store bounds and boundaries
         xBoundsObst   = [xBoundsObst;    xbObst    ];
@@ -130,44 +149,42 @@ for i=1:numel(xcTarget)
 
         %-------------- effective bounds that agent traverses ------------%
 
-        % define agent size
-        agentWidth = agentParams.relativeWidth.*arena.size(1);
-
         % define bounds of obstacle
-        xbObst_agent = [xcObstacle(i) - obstacle.width/2  - agentWidth/2, xcObstacle(i) + obstacle.width/2  + agentWidth/2];
-        ybObst_agent = [ycObstacle(i) - obstacle.height/2 - agentWidth/2, ycObstacle(i) + obstacle.height/2 + agentWidth/2];
+        xbObst_agent = [xcObstacle(i) - obstacle.width/2  - planner.agentWidth/2, xcObstacle(i) + obstacle.width/2  + planner.agentWidth/2];
+        ybObst_agent = [ycObstacle(i) - obstacle.height/2 - planner.agentWidth/2, ycObstacle(i) + obstacle.height/2 + planner.agentWidth/2];
 
-        % use bounds to extract full boundary (densely-sampled) around 
-        % obstacle; this will be used for planning constant-velocity 
-        % trajectories around obstacle
-        [xbndryObst_agent,ybndryObst_agent,hbObst_agent,indSides_agent,indCorners_agent] = ...
-            getBoundary(xbObst_agent,ybObst_agent,planner.nxObstacle);
+        % extract agent's view of obstacle boundary
+        [xbndryObst_agent,ybndryObst_agent,hbObst_agent,indSides_agent,indCorners_agent,corners_agent] = ...
+            getBoundary(xbObst_agent,ybObst_agent,4*arena.np);
     
         % store bounds and boundaries
-        xBoundsObst_agent      = [xBoundsObst_agent;     xbObst_agent    ];
-        yBoundsObst_agent      = [yBoundsObst_agent;     ybObst_agent    ];
-        xBoundaryObst_agent    = [xBoundaryObst_agent;   xbndryObst_agent];
-        yBoundaryObst_agent    = [yBoundaryObst_agent;   ybndryObst_agent];
-        hBoundaryObst_agent    = [hBoundaryObst_agent;   hbObst_agent    ];
-        boundaryCorners_agent  = [boundaryCorners_agent; indCorners_agent];
-        boundarySides_agent{i} = indSides_agent;
+        xBoundsObst_agent       = [xBoundsObst_agent;       xbObst_agent    ];
+        yBoundsObst_agent       = [yBoundsObst_agent;       ybObst_agent    ];
+        xBoundaryObst_agent     = [xBoundaryObst_agent;     xbndryObst_agent];
+        yBoundaryObst_agent     = [yBoundaryObst_agent;     ybndryObst_agent];
+        hBoundaryObst_agent     = [hBoundaryObst_agent;     hbObst_agent    ];
+        boundaryCornerIDs_agent = [boundaryCornerIDs_agent; indCorners_agent];
+        boundaryCorners_agent   = [boundaryCorners_agent;   corners_agent   ];
+        boundarySides_agent{i}  = indSides_agent;
 
     else
         % store bounds and boundaries
-        npBoundary = 2*(floor(planner.nxObstacle.*obstacle.width)+floor(planner.nxObstacle.*obstacle.height));
+        npBoundary = 2*(floor(planner.nInterp.*obstacle.width)...
+            +floor(planner.nInterp.*obstacle.height));
 
         xBoundsObst   = [xBoundsObst;    nan(1,2)         ];
         yBoundsObst   = [yBoundsObst;    nan(1,2)         ];
         xBoundaryObst = [xBoundaryObst;  nan(1,npBoundary)];
         yBoundaryObst = [yBoundaryObst;  nan(1,npBoundary)];
 
-        xBoundsObst_agent      = [xBoundsObst_agent;     nan(1,2)         ];
-        yBoundsObst_agent      = [yBoundsObst_agent;     nan(1,2)         ];
-        xBoundaryObst_agent    = [xBoundaryObst_agent;   nan(1,npBoundary)];
-        yBoundaryObst_agent    = [yBoundaryObst_agent;   nan(1,npBoundary)];
-        hBoundaryObst_agent    = [hBoundaryObst_agent;   nan(1,npBoundary)];
-        boundaryCorners_agent  = [boundaryCorners_agent; nan(1,5)         ];
-        boundarySides_agent{i} = NaN;
+        xBoundsObst_agent       = [xBoundsObst_agent;       nan(1,2)         ];
+        yBoundsObst_agent       = [yBoundsObst_agent;       nan(1,2)         ];
+        xBoundaryObst_agent     = [xBoundaryObst_agent;     nan(1,npBoundary)];
+        yBoundaryObst_agent     = [yBoundaryObst_agent;     nan(1,npBoundary)];
+        hBoundaryObst_agent     = [hBoundaryObst_agent;     nan(1,npBoundary)];
+        boundaryCornerIDs_agent = [boundaryCornerIDs_agent; nan(1,5)         ];
+        boundaryCorners_agent   = [boundaryCorners_agent;   nan(1,npBoundary)];
+        boundarySides_agent{i}  = NaN;
     end
 
 end
@@ -208,8 +225,8 @@ trial.obstacle.agent.xBoundary  = xBoundaryObst_agent;
 trial.obstacle.agent.yBoundary  = yBoundaryObst_agent;
 trial.obstacle.agent.heading    = hBoundaryObst_agent;
 trial.obstacle.agent.indSides   = boundarySides_agent;
-trial.obstacle.agent.indCorners = boundaryCorners_agent;
-
+trial.obstacle.agent.indCorners = boundaryCornerIDs_agent;
+trial.obstacle.agent.corners    = boundaryCorners_agent;
 
 
 if ~strcmp(trialParams.obstacleArrangement,'none')
@@ -235,8 +252,8 @@ if ~strcmp(trialParams.obstacleArrangement,'none')
     
         for j=1:4
             inds = indSides_agent{j};
-            trial.obstacle.agent.block(i).region(j).xBoundary = xBoundaryObst_agent(inds);
-            trial.obstacle.agent.block(i).region(j).yBoundary = yBoundaryObst_agent(inds); 
+            trial.obstacle.agent.block(i).region(j).xBoundary = trial.obstacle.agent.xBoundary(inds);
+            trial.obstacle.agent.block(i).region(j).yBoundary = trial.obstacle.agent.yBoundary(inds); 
         end
     
     end
