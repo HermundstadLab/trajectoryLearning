@@ -71,7 +71,7 @@ for trialID=1:trial.nTrials
     % (sufficient to recover full planned trajectory); store number of
     % anchors in an accessible field
     traj_planned{ trialID}.anchors = plannedTrajectory.anchors;
-    traj_planned{ trialID}.phi     = plannedTrajectory.phi;
+    traj_planned{ trialID}.delta   = plannedTrajectory.delta;
 
     % store full executed trajectory
     traj_executed{trialID} = executedTrajectory;
