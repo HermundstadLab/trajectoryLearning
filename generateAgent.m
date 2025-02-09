@@ -1,17 +1,18 @@
-function [belief,sampler,planner] = generateAgent(belief,agentParams)
+function [belief,sampler,planner] = generateAgent(belief,planner,agentParams)
 % GENERATEAGENT Generate structures that specify computational modules of
 % the agent. 
 %
-%   [belief,sampler,planner] = GENERATEAGENT(agentType,belief) takes as 
-%   input a structure that specifies parameter settings for the agent, and  
-%   another structure that specifies properties of the agent's belief that
-%   are constrained by the environment (this structure will be augmented
-%   within this function). The function returns structures that specify the
-%   settings for the agent's belief, sampler, and planner modules. 
+%   [belief,sampler,planner] = GENERATEAGENT(belief,planner,agentParams) 
+%   takes as input two structures that specify environment-specific 
+%   properties of the agent's belief and planning modules (these will
+%   be augmented within this function); it also takes as input a structure
+%   that specifies parameter settings for the agent. The function returns 
+%   structures that specify the augmented settings for the agent's belief,
+%   sampler, and planner modules. 
 %
-%   In order to contruct the input 'belief' structure, the functions 
-%   loadEnvironmentParams and generateEnvironment must be run before 
-%   running loadAgentParams.
+%   In order to contruct the input 'belief' and 'planner' structures, the 
+%   functions LOADENVIRONMENTPARAMS, LOADAGENTPARAMS, and 
+%   GENERATEENVIRONMENT must be run before running LOADAGENTPARAMS.
 %   
 %   See also: GENERATEENVIRONMENT, GENERATETRIALSTRUCTURE
 
@@ -33,6 +34,7 @@ belief.cacheThreshold = agentParams.cacheThreshold;                 % surprise t
 belief.cacheWindow    = agentParams.cacheWindow;                    % number of successive timepoints that cache signal must exceed threshold
 belief.mask           = createPosteriorMask(belief);                % create posterior mask based on arena bounds
 belief.cache          = agentParams.cacheFlag;                      % determines whether to cache posterior
+belief.boundaryTol    = agentParams.anchorTolShift;                 % tolerance for determining boundary anchors
 
 
 %---------------------- build sampler structure --------------------------%
@@ -52,10 +54,6 @@ planner.rScale         = belief.size(2)./2;                         % used to sc
 planner.tol_shift      = agentParams.anchorTolShift;                % default tolerance for shifting anchors                                                                    
 planner.thTol_shift    = agentParams.anchorTolShift*belief.size(1); % default angular tolerance for shifting anchors (a.u.)
 planner.rTol_shift     = agentParams.anchorTolShift*belief.size(2); % default radial tolerance for shifting anchors (a.u.)
-planner.nxObstacle     = floor(agentParams.spaceInterp*belief.np);  % number of spatial points per unit length used to
-                                                                    %   interpolate obstacle boundaries (sets boundary velocity)
-planner.boundaryVelocity = 1./agentParams.spaceInterp;              % velocity at which agent moves along obstacle boundaries
-                                                                    %   (this should be sufficiently fast; will o/w burn obstacle boundary into posterior)
 planner.scaleTol       = agentParams.anchorTolScaling;              % determines whether to scale tolerances around individual anchors 
 planner.orderType      = agentParams.anchorOrderMethod;             % type of ordering to use for anchor points; 
 
