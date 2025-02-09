@@ -42,7 +42,7 @@ addpath("auxiliaryFunctions/","auxiliaryFunctions/peaks2/","plottingFunctions/")
 % environment, agent, and trial protocol are respectively stored in 
 % 'loadEnvironmentParams','loadAgentParams', and 'loadTrialParams'.
 
-clear all;
+clear;
 
 % load plotting parameters
 %   current options: 'whiteBG'
@@ -53,23 +53,20 @@ plotParams = loadPlotParams(plotType);
 % NOTE: the following functions build upon one another, and must be called 
 % in order.
 
-% generate environment
-%   current options: 'default'
-envType = 'default';
-[arenaParams,targetParams,obstacleParams] = loadEnvironmentParams(envType);
-[arena,belief,target,obstacle] = generateEnvironment(arenaParams,targetParams,obstacleParams);
-
-% generate agent
-%   current options: 'default'
+% generate agent and environment
+%   current environment options: 'default'
+%   current agent options: 'default'
+envType   = 'default';
 agentType = 'default';
-agentParams = loadAgentParams(agentType);
-[belief,sampler,planner] = generateAgent(belief,agentParams);
+[arenaParams,targetParams,obstacleParams] = loadEnvironmentParams(envType);
+agentParams                               = loadAgentParams(agentType);
+[arena,belief,sampler,planner,target,obstacle] = generateEnvironment(arenaParams,targetParams,obstacleParams,agentParams);
 
 % generate trial protocol
 %   current options: 'singleTarget', 'multiTarget', 'obstacle'
-exptType = 'singleTarget';
+exptType = 'obstacle';
 trialParams = loadTrialParams(exptType);
-trial = generateTrialStructure(arena,target,obstacle,planner,agentParams,trialParams);
+trial = generateTrialStructure(arena,target,obstacle,planner,trialParams);
 
 
 %% load or simulate a single agent and plot results from a single trial
