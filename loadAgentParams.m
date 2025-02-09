@@ -36,7 +36,7 @@ if strcmp(agentType,'default')
                                                             % options: 'TSP' (solves approx traveling salesman)
                                                             %          'angle' (sorts anchors based on angle)
 
-    agentParams.errorThreshold    = 0.0002;                 % error threshold for augmenting anchors points
+    agentParams.errorThreshold    = -0.05;                  % error threshold for augmenting anchors points
     
     agentParams.timeInterp        = 100;                    % number of timepoints to use to interpolate trajectories
     agentParams.spaceInterp       = 0.25;                   % number of spatial points to interpolate trajectories around obstacles
