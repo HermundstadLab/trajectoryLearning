@@ -14,57 +14,74 @@ function trajectory = optimizeTrajectory(anchors,belief,planner)
 %   See also: ORDERANCHORS, PLANTRAJECTORY
 
 
-%---------------------- optimizing anchor order --------------------------%
-% determine optimal ordering of anchors
-anchorsOrdered = orderAnchors(anchors,planner);
+%---------------------- check for boundary run ---------------------------%
+% if majority of anchors lie along the boundary, plan boundary run
+boundaryAnchors = checkBoundary(anchors,belief);
+if mean(boundaryAnchors)>0.5
 
+    trajectory = planner.boundaryTrajectory;
 
-%-------------------- optimizing anchor locations ------------------------%
-% determine specific placement of anchors, within some tolerance of their
-% original locations
-nAnchors = anchorsOrdered.N;
-
-if planner.scaleTol
-    dthLB = anchorsOrdered.thTol;                   % angular shift, lower bound 
-    drLB  = anchorsOrdered.rTol;                    % radial shift,  lower bound 
+% otherwise, execute normal run
 else
-    dthLB = planner.thTol_shift.*ones(1,nAnchors);  % angular shift, lower bound 
-    drLB  = planner.rTol_shift.*ones(1,nAnchors);   % radial shift,  lower bound 
-end
-dthUB = dthLB;                                      % angular shift, upper bound 
-drUB  = drLB;                                       % radial shift,  upper bound 
 
-% define bounds for optimization (defined by the maximum of the lower bound
-% and the minimum boundaries of the arena, and similarly by the minimum of
-% the upper bound and the maximum boundaries of the arena):
-LB = max([[belief.thMin.*ones(1,nAnchors),[belief.rMin,belief.rMinAnchors.*ones(1,nAnchors-2),belief.rMin],0];...
-          [anchorsOrdered.thCoords-dthLB, anchorsOrdered.rCoords-drLB,                                     0 ]],[],1);
-UB = min([[belief.thMax.*ones(1,nAnchors),belief.rMax.*ones(1,nAnchors),pi];...
-          [anchorsOrdered.thCoords+dthUB, anchorsOrdered.rCoords+drUB,  pi]],[],1);
+    %---------------------- optimizing anchor order --------------------------%
+    % determine optimal ordering of anchors
+    anchorsOrdered = orderAnchors(anchors,planner);
+    
+    
+    %-------------------- optimizing anchor locations ------------------------%
+    % determine specific placement of anchors, within some tolerance of their
+    % original locations
+    nAnchors = anchorsOrdered.N;
+    
+    if planner.scaleTol
+        dthLB = anchorsOrdered.thTol;                   % angular shift, lower bound 
+        drLB  = anchorsOrdered.rTol;                    % radial shift,  lower bound 
+    else
+        dthLB = planner.thTol_shift.*ones(1,nAnchors);  % angular shift, lower bound 
+        drLB  = planner.rTol_shift.*ones(1,nAnchors);   % radial shift,  lower bound 
+    end
+    dthUB = dthLB;                                      % angular shift, upper bound 
+    drUB  = drLB;                                       % radial shift,  upper bound 
+    
+    [dth,~] = dpol(anchorsOrdered.thCoords(1:2),anchorsOrdered.rCoords(1:2));
+    deltaMin = max(0,pi/2-dth);
+    deltaMax = min(pi,3*pi/2-dth);
 
-% define initial condition (add small uniform noise to original anchor locations)
-phi = pi*rand();                     % initial guess for first heading angle
-p0  = [anchorsOrdered.thCoords + anchorsOrdered.thTol.*rand(1,nAnchors)-anchorsOrdered.thTol/2,...
-       anchorsOrdered.rCoords  + anchorsOrdered.rTol.*rand( 1,nAnchors)-anchorsOrdered.rTol/2,...
-       phi];
-e0  = errFnc([anchorsOrdered.thCoords,anchorsOrdered.rCoords,phi]);
+    % define bounds for optimization (defined by the maximum of the lower bound
+    % and the minimum boundaries of the arena, and similarly by the minimum of
+    % the upper bound and the maximum boundaries of the arena):
+    LB = max([[belief.thMin.*ones(1,nAnchors),[belief.rMin,belief.rMinAnchors.*ones(1,nAnchors-2),belief.rMin],deltaMin];...
+              [anchorsOrdered.thCoords-dthLB, anchorsOrdered.rCoords-drLB,                                     deltaMin]],[],1);
+    UB = min([[belief.thMax.*ones(1,nAnchors),belief.rMax.*ones(1,nAnchors),deltaMax];...
+              [anchorsOrdered.thCoords+dthUB, anchorsOrdered.rCoords+drUB,  deltaMax]],[],1);
+    
+    % define initial condition (add small uniform noise to original anchor locations)
+    delta = (deltaMax-deltaMin)*rand()+deltaMin;                     % initial guess for first heading angle
+    p0  = [anchorsOrdered.thCoords + anchorsOrdered.thTol.*rand(1,nAnchors)-anchorsOrdered.thTol/2,...
+           anchorsOrdered.rCoords  + anchorsOrdered.rTol.*rand( 1,nAnchors)-anchorsOrdered.rTol/2,...
+           delta];
+    e0  = errFnc([anchorsOrdered.thCoords,anchorsOrdered.rCoords,delta]);
+    
+    % optimize anchor placement
+    options = optimoptions('fmincon','display','off','Algorithm','sqp');
+    [pmin,emin] = fmincon(@errFnc,p0,[],[],[],[],LB,UB,[],options);
+    
+    % accept optimization if final curvilinear distance is lower than initial
+    if emin<e0
+        anchorsOpt.thCoords = pmin(1:nAnchors);
+        anchorsOpt.rCoords  = pmin(nAnchors+1:end-1);
+        anchorsOpt.thTol    = anchorsOrdered.thTol;
+        anchorsOpt.rTol     = anchorsOrdered.rTol;
+        anchorsOpt.N        = nAnchors;
+        deltaOpt              = pmin(end);
+    
+        trajectory = planTrajectory(anchorsOpt,deltaOpt,planner);
+    else
+        trajectory = planTrajectory(anchorsOrdered,delta,planner);
+    end
+    
 
-% optimize anchor placement
-options = optimoptions('fmincon','display','off','Algorithm','sqp');
-[pmin,emin] = fmincon(@errFnc,p0,[],[],[],[],LB,UB,[],options);
-
-% accept optimization if final curvilinear distance is lower than initial
-if emin<e0
-    anchorsOpt.thCoords = pmin(1:nAnchors);
-    anchorsOpt.rCoords  = pmin(nAnchors+1:end-1);
-    anchorsOpt.thTol    = anchorsOrdered.thTol;
-    anchorsOpt.rTol     = anchorsOrdered.rTol;
-    anchorsOpt.N        = nAnchors;
-    phiOpt              = pmin(end);
-
-    trajectory = planTrajectory(anchorsOpt,phiOpt,planner);
-else
-    trajectory = planTrajectory(anchorsOrdered,phi,planner);
 end
 
     function err = errFnc(params)
@@ -77,4 +94,34 @@ end
 
 end
 
+function boundaryAnchors = checkBoundary(anchors,belief)
+% Returns a binary vector whose nonzero entries flag anchors within a given
+% tolerance of the arena boundary
 
+dth = abs(anchors.thCoords-belief.thBoundary');
+dr  = abs(anchors.rCoords -belief.rBoundary' );
+[~,ind] = min(dr+dth);
+
+dist = nan(1,anchors.N);
+for i=1:anchors.N
+    [~,dist(i)] = dpol([anchors.thCoords(i),belief.thBoundary(ind(i))]./diff(belief.thBounds),...
+        [anchors.rCoords(i),belief.rBoundary(ind(i))]./diff(belief.rBounds));
+end
+boundaryAnchors = zeros(1,anchors.N);
+boundaryAnchors(dist<belief.boundaryTol) = 1;
+
+end
+
+function trajectory = createBoundaryTrajectory(anchors,planner)
+trajectory.anchors = anchors;
+trajectory.delta = nan;
+
+nTimePts = numel(planner.boundaryTrajectory.xCoords);
+trajectory.prevAnchor = ones(1,nTimePts);
+trajectory.xCoords  = planner.boundaryTrajectory.xCoords;
+trajectory.yCoords  = planner.boundaryTrajectory.yCoords;
+trajectory.velocity = planner.boundaryTrajectory.velocity;
+trajectory.heading  = planner.boundaryTrajectory.heading;
+trajectory.timepts  = [];
+trajectory.distance = planner.boundaryTrajectory.distance;
+end

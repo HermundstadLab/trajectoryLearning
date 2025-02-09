@@ -22,11 +22,12 @@ function plannedTrajectory = evaluateTrajectory(trajectory,errormap,belief,sampl
 lininds   = sub2ind(size(errormap),indr,indth);
 predError = min(errormap(lininds));
 
-% if error exceeds threshold, augment the set of anchor points by sampling
-% from the errormap, and plan a new trajectory
-if predError<sampler.errorThreshold
+% if error exceeds threshold and trajectory is not a boundary run, augment 
+% the set of anchor points by sampling from the errormap, and plan a new 
+% trajectory
+if predError<sampler.errorThreshold && ~trajectory.boundaryFlag
     % sample new 'augmenting' set of anchor points from the errormap
-    anchorsAug = sampleAnchors(errormap,belief,sampler,planner);
+    anchorsAug = sampleAnchors(errormap,belief,sampler,planner,1);
 
     % remove home port from existing set of anchor points, and augment 
     % set with newly sampled anchor points
