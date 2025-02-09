@@ -12,229 +12,385 @@ function executedTrajectory = divertTrajectory(trajectory,trial,planner,trialID)
 
 % extract agent's view of obstacle
 agentView = trial.obstacle.agent;
+intersectionType = 'inside';
 
 % extract block ID
 blockID = trial.blockIDs(trialID);
 
 % determine which portions of the trajectory were affected by obstacle ('obstacleVec')
 [~,obstacleVec,~] = intersectTrajectory(trajectory.xCoords,trajectory.yCoords,...
-    agentView.xBounds(blockID,:),...
-    agentView.yBounds(blockID,:));
+    agentView.xBounds(blockID,:),agentView.yBounds(blockID,:),intersectionType);
 
-% find timepoints when trajectory enters and exits obstacle
-entrances = find(diff(obstacleVec)>0);
-exits     = find(diff(obstacleVec)<0)+1;
+% find timepoint just before agent enters obstacle
+entrances = find(diff(obstacleVec)>0);     
 
-% specify entry angles of obstable boundaries, indexed by:
-% boundary ID: 1:bottom; 2:right; 3:top; 4:left (rows of array)
-% orientation: 1:CW; 2:CCW (columns of array)
-angles = [[0, pi,   ];...
-   [    pi/2, 3*pi/2];...
-   [      pi, 2*pi  ];...
-   [  3*pi/2, pi/2  ]];
+% specify entry angles along boundaries, indexed by:
+%   boundary ID: 1:bottom; 2:right; 3:top; 4:left (rows of array)
+%   orientation: 1:CW; 2:CCW (columns of array)
+boundaryAngles = [[0, pi    ,2*pi  ];...
+   [    pi/2, 3*pi/2,5*pi/2];...
+   [      pi, 2*pi  , -pi  ];...
+   [  3*pi/2, pi/2  ,-pi/2 ]];
 
-% consider each planned trajectory that intersects the obstacle 
-% (separated into 'boundary' and 'open field' components); these will be
-% inserted into the planned trajectory
-boundarySegments = {};
-openSegments     = {};
+% initialize fields for updating trajectories and boundary segments
+trajFields     = {'prevAnchor','xCoords','yCoords','velocity','heading'};
+anchorFields   = {'thCoords','rCoords','thTol','rTol'};
+boundaryFields = {'xCoords','yCoords','heading','corners'};
 
-for i=1:numel(entrances)
+% initialize executed trajectory:
+originalTrajectory = trajectory;
+executedTrajectory = planEmptyTrajectory(trajFields);
+
+% store first trajectory segment from home port to first boundary encounter
+inds = 1:entrances(1);
+executedTrajectory = expandTrajectory(executedTrajectory,originalTrajectory,trajFields,inds);
+originalTrajectory = trimTrajectory(originalTrajectory,trajFields,inds);
+obstacleVec(inds) = [];
+
+while numel(obstacleVec)>0 && obstacleVec(1)>0
+    if numel(obstacleVec)==0 || obstacleVec(1)==0 
+        break
+    end
     
-    % extract segment of trajectory that passes through obstacle
-    inds = entrances(i):exits(i);                   % indices of segment
-    xseg = trajectory.xCoords(inds);                % x-coordinates of segment
-    yseg = trajectory.yCoords(inds);                % y-coordinates of segment
-    hseg = wrapTo2Pi(trajectory.heading(inds));     % heading during segment
+    % determine exit point from boundary
+    trajectoryInds.boundaryExit = min([numel(obstacleVec),find(diff(obstacleVec)<0,1,'first')+1]);
+    trajectoryInds.boundaryIntersection = 1:trajectoryInds.boundaryExit;
 
-    % determine which obstacle boundary the trajectory entered:
-    % 1:bottom; 2:right; 3:top; 4:left
-    [~,indStart] = min( abs(xseg(1)-agentView.xBoundary(blockID,:)) ...
-        + abs(yseg(1)-agentView.yBoundary(blockID,:)) );
-    boundaryID   = find(histcounts(indStart,agentView.indCorners(blockID,:)));
+    % extract segment of trajectory that intersected with boundary
+    trajectorySegment.boundaryIntersection = extractTrajectorySegment(originalTrajectory,trajectoryInds.boundaryIntersection,trajFields);
+    boundarySegment = extractBoundarySegment(trajectorySegment.boundaryIntersection,agentView,boundaryAngles,blockID);
 
-    % determine the travel direction that minimizes the change in heading
-    [~,orientation] = min(abs(hseg(1) - angles(boundaryID,:)));
+    % extract next anchor point after exiting boundary
+    [nextAnchor,trajectoryInds.nextAnchor] = extractNextAnchor(originalTrajectory,agentView,blockID,intersectionType);
 
-    % extract oriented segment of boundary along which trajectory will be diverted
-    xBoundary  = circshift(agentView.xBoundary(blockID,:),numel(agentView.xBoundary(blockID,:))-indStart+1);
-    yBoundary  = circshift(agentView.yBoundary(blockID,:),numel(agentView.yBoundary(blockID,:))-indStart+1);
-    heading    = circshift(agentView.heading(blockID,:),  numel(agentView.heading(  blockID,:))-indStart+1);
-    if orientation>1
-        xBoundary = fliplr(xBoundary);
-        yBoundary = fliplr(yBoundary);
-        heading   = fliplr(heading);
-        heading   = wrapTo2Pi(heading+pi);
-    end
-    [~,indEnd] = min(abs(xseg(end)-xBoundary) + abs(yseg(end)-yBoundary));
-    xBoundary = xBoundary(1:indEnd);
-    yBoundary = yBoundary(1:indEnd);
-    heading   = heading(  1:indEnd);
+    % extract face of boundary that is exposed to next anchor point
+    [exposedFace,boundaryInds.exposedFace] = getExposedFace(nextAnchor,boundarySegment,agentView,blockID);
 
-    % extract first anchor point after trajectory passes through obstacle
-    prevAnchorID = trajectory.prevAnchor(exits(i));
-    nextAnchorID = prevAnchorID+1;
-    [xAnchor,yAnchor] = pol2cart(trajectory.anchors.thCoords(nextAnchorID),...
-        trajectory.anchors.rCoords(nextAnchorID));
+    % determine how to divert trajectory around obstacle
 
-    % if next anchor is within the obstacle, select the subsequent anchor
-    while intersectTrajectory(xAnchor,yAnchor,agentView.xBounds(blockID,:),agentView.yBounds(blockID,:))
-        nextAnchorID = nextAnchorID+1;
-        [xAnchor,yAnchor] = pol2cart(trajectory.anchors.thCoords(nextAnchorID),...
-            trajectory.anchors.rCoords(nextAnchorID));
-    end
+    %%%%%%%%%%%%%%%%%%%%%%%% DIVERSION SCENARIOS %%%%%%%%%%%%%%%%%%%%%%%%%%
+    % OPTION 1: the next anchor is reachable                              %
+    %   OPTION 1A: the next anchor is already visible to the agent when   % 
+    %   it encounters the boundary                                        %
+    %       response: agent executes the entire diverted trajectory until %
+    %                 it reaches original exit point from the boundary    %
+    %   OPTION 1B: the next anchor is not visible to the agent when it    %
+    %   encounters the boundary                                           %
+    %       response: agent traverses the boundary trajectory until the   %
+    %       next anchor point becomes visible, at which point it peels    %
+    %       away from the boundary                                        %
+    %                                                                     %
+    % OPTION 2: the next anchor is unreachable (i.e. it is within the     %
+    % obstacle) or it in not along the faces of the obstacle along which  %
+    % the trajectory would be diverted                                    %
+    %       response: the agent must alter the boundary trajectory        %
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    % extract the obstacle faces that are exposed to the anchor point
-    [xExposedFace,yExposedFace,exposedFaceID] = getSolidAngle(agentView,blockID,xAnchor,yAnchor);
+    % OPTION 1: if next anchor is reachable
+    if nextAnchor.nextAnchorID-nextAnchor.prevAnchorID==1 && numel(boundaryInds.exposedFace)>0 
 
-    % find the point along the boundary segment that first intersects the
-    % exposed faces of the obstacle (the first entry in 'indExposed')
-    [~,indExposed,~] = intersect([xBoundary',yBoundary'],...
-        [xExposedFace',yExposedFace'],'rows','stable');
+        % OPTION 1A: if agent is already on exposed boundary face
+        if ismember(boundarySegment.entryFaceID,exposedFace.exposedFaceID) 
 
-    % extract index of next anchor point
-    nextAnchorIndex = find(trajectory.prevAnchor==nextAnchorID,1,'first');
+            % use exit point from boundary as anchor point, and generate
+            % a trajectory segment along boundary
+            [boundaryTrajectory,boundaryInds] = generateBoundaryTrajectory(boundarySegment,nextAnchor,boundaryInds,planner);
+      
+            % add boundary trajectory to existing trajectory
+            executedTrajectory = expandTrajectory(executedTrajectory,boundaryTrajectory,trajFields);
 
-    % if the agent is already on the exposed face, or if the exposed face 
-    % is not contained in the set of boundaries that the agent traverses
-    % along its diverted trajectory, assume the agent executes the entire
-    % diverted trajectory until it reaches its original exit point from
-    % the obstacle  
-    if ismember(boundaryID,exposedFaceID) || numel(indExposed)==0
-        indsTrajBound = 1:numel(xBoundary);
-        trajDivertedBoundary.prevAnchor = prevAnchorID.*ones(size(indsTrajBound));
-        trajDivertedBoundary.xCoords    = xBoundary;
-        trajDivertedBoundary.yCoords    = yBoundary;
-        trajDivertedBoundary.velocity   = planner.boundaryVelocity.*ones(size(indsTrajBound));
-        trajDivertedBoundary.heading    = heading;
+            % add remaining portion of original trajectory until next anchor
+            trajectoryInds.OpenField = trajectoryInds.boundaryExit+1:trajectoryInds.nextAnchor; 
+            executedTrajectory = expandTrajectory(executedTrajectory,originalTrajectory,trajFields,trajectoryInds.OpenField);
 
-        indsTrajOpen = exits(i)+1:nextAnchorIndex;
-        trajDivertedOpen.prevAnchor     = prevAnchorID.*ones(size(indsTrajOpen));
-        trajDivertedOpen.xCoords        = trajectory.xCoords(     indsTrajOpen);
-        trajDivertedOpen.yCoords        = trajectory.yCoords(     indsTrajOpen);
-        trajDivertedOpen.velocity       = trajectory.velocity(    indsTrajOpen);
-        trajDivertedOpen.heading        = trajectory.heading(     indsTrajOpen);
+            % trim original trajectory
+            trajectoryInds.divertedSegment = [trajectoryInds.boundaryIntersection,trajectoryInds.OpenField];
+            originalTrajectory = trimTrajectory(originalTrajectory,trajFields,trajectoryInds.divertedSegment);
+            obstacleVec(trajectoryInds.divertedSegment) = [];
 
-    % otherwise, assume the agent travels around obstacle boundary until it
-    % can peel away toward next anchor point
+        % OPTION 1B: if agent is not on exposed boundary face
+        else
+            % split boundary segment at point where agent can see next anchor
+            indSplit = boundaryInds.exposedFace(1);
+            indEnd   = numel(boundarySegment.xCoords);
+
+            if indSplit==numel(boundarySegment.xCoords)
+                % extract full boundary segment
+                boundarySegment = extractBoundarySegment(trajectorySegment.boundaryIntersection,agentView,boundaryAngles,blockID,1);
+                indEnd   = numel(boundarySegment.xCoords);
+            end
+            [boundarySegment1,boundarySegment2] = splitTrajectory(boundarySegment,boundaryFields,indSplit,indEnd);
+
+            % generate boundary trajectory
+            [boundaryTrajectory,boundaryInds] = generateBoundaryTrajectory(boundarySegment1,nextAnchor,boundaryInds,planner);
+
+            % add boundary trajectory to existing trajectory
+            executedTrajectory = expandTrajectory(executedTrajectory,boundaryTrajectory,trajFields);
+
+            % generate open field trajectory to next anchor point
+            openFieldTrajectory = generateOpenFieldTrajectory(originalTrajectory,boundarySegment2,nextAnchor,trajectoryInds,planner);
+
+            % add open field trajectory to existing trajectory
+            executedTrajectory = expandTrajectory(executedTrajectory,openFieldTrajectory,trajFields);
+
+            % trim original trajectory
+            trajectoryInds.OpenField = trajectoryInds.boundaryExit+1:trajectoryInds.nextAnchor;
+            trajectoryInds.divertedSegment = [trajectoryInds.boundaryIntersection,trajectoryInds.OpenField];
+            originalTrajectory = trimTrajectory(originalTrajectory,trajFields,trajectoryInds.divertedSegment);
+            obstacleVec(trajectoryInds.divertedSegment) = [];
+
+        end
+
+    % OPTION 2: if next anchor is unreachable, proceed to subsequent anchor
+    elseif nextAnchor.nextAnchorID-nextAnchor.prevAnchorID>1 || numel(boundaryInds.exposedFace)==0 
+
+        % extract full boundary segment
+        boundarySegment = extractBoundarySegment(trajectorySegment.boundaryIntersection,agentView,boundaryAngles,blockID,1);
+
+        % find point along boundary segment that first intersects exposed face
+        [~,indSplit] = min(abs(boundarySegment.yCoords'-exposedFace.yCoords([1,end]))...
+            + abs(boundarySegment.xCoords'-exposedFace.xCoords([1,end])),[],1);
+        indEnd   = numel(boundarySegment.xCoords);
+
+        % split boundary segment at point where agent can see next anchor 
+        [boundarySegment1,boundarySegment2] = splitTrajectory(boundarySegment,boundaryFields,min(indSplit),indEnd);
+
+        % generate boundary trajectory
+        [boundaryTrajectory,boundaryInds] = generateBoundaryTrajectory(boundarySegment1,nextAnchor,boundaryInds,planner);
+
+        % add boundary trajectory to existing trajectory
+        executedTrajectory = expandTrajectory(executedTrajectory,boundaryTrajectory,trajFields);
+
+        % generate open field trajectory to next anchor point
+        openFieldTrajectory = generateOpenFieldTrajectory(originalTrajectory,boundarySegment2,nextAnchor,trajectoryInds,planner);
+
+        % add open field trajectory to existing trajectory
+        executedTrajectory = expandTrajectory(executedTrajectory,openFieldTrajectory,trajFields);
+
+        % trim original trajectory
+        trajectoryInds.OpenField = trajectoryInds.boundaryExit+1:trajectoryInds.nextAnchor;
+        trajectoryInds.divertedSegment = [trajectoryInds.boundaryIntersection,trajectoryInds.OpenField];
+        originalTrajectory = trimTrajectory(originalTrajectory,trajFields,trajectoryInds.divertedSegment);
+        obstacleVec(trajectoryInds.divertedSegment) = [];
+
     else
-
-        % generate the first portion of the diverted trajectory by moving at 
-        % an approximately constant speed around the unexposed portion of the 
-        % obstacle:
-        indsTrajBound = 1:indExposed(1)-1;
-        trajDivertedBoundary.prevAnchor = prevAnchorID.*ones(1,max(1,numel(indsTrajBound)));
-        trajDivertedBoundary.xCoords    = xBoundary(indsTrajBound);
-        trajDivertedBoundary.yCoords    = yBoundary(indsTrajBound);
-        trajDivertedBoundary.velocity   = planner.boundaryVelocity.*ones(size(indsTrajBound));
-        trajDivertedBoundary.heading    = heading(indsTrajBound);
-
-        % once trajectory reaches the first exposed corner of the obstacle,
-        % use the corner as an anchor point, and generate a standard trajectory 
-        % segment to the next (i.e., the original) anchor point:
-        [anchors.thCoords,anchors.rCoords] = cart2pol(xBoundary(indExposed(1)),yBoundary(indExposed(1)));
-        anchors.thCoords = [anchors.thCoords,trajectory.anchors.thCoords(nextAnchorID)];
-        anchors.rCoords  = [anchors.rCoords, trajectory.anchors.rCoords( nextAnchorID)];
-        anchors.N = numel(anchors.thCoords);
-    
-        % choose initial heading such that agent initially follows obstacle 
-        % boundary before peeling away; if this generates a large discontinuity
-        % in heading at next anchor point, choose the negative of this heading. 
-        if numel(indsTrajBound)<1
-            nextBoundaryHeading = heading(1);
-        else
-            nextBoundaryHeading = heading(indsTrajBound(end)+1);
-        end
-        [dth,~] = dpol(anchors.thCoords,anchors.rCoords);
-        phi = nextBoundaryHeading-dth+pi/2;
-        phiSet = [phi,-phi];
-    
-        % if the next anchor point is the final one (i.e., the home port), peel
-        % away from the boundary (i.e., choose first of allowed initial headings)
-        if nextAnchorID==max(trajectory.prevAnchor)+1
-            phi = phiSet(1);
-
-        % otherwise, choose the initial heading that minimizes the difference
-        % with the subsequent heading
-        else
-            angleVec = [-2*pi,0,2*pi]';
-            nextAnchorHeading = trajectory.heading(nextAnchorIndex);
-            finalHeading = pi/2+dth-phiSet;
-            [~,indMin] = min(min(finalHeading-(nextAnchorHeading-angleVec),[],1));
-            phi = phiSet(indMin);
-        end
-       
-        trajDivertedOpen            = planTrajectory(anchors,phi,planner);
-        trajDivertedOpen.prevAnchor = trajDivertedOpen.prevAnchor+prevAnchorID-1;
+        error('anchor IDs do not match')   
     end
 
-    % store diverted trajectory segments to be inserted into planned trajectory:
-    boundarySegments{i} = trajDivertedBoundary;
-    openSegments{i}     = trajDivertedOpen;
+    % add remaining trajectory until next obstacle intersection
+    inds = 1:find(diff(obstacleVec)>0,1,'first');
+    executedTrajectory = expandTrajectory(executedTrajectory,originalTrajectory,trajFields,inds);
+
+    % trim original trajectory
+    originalTrajectory = trimTrajectory(originalTrajectory,trajFields,inds);
+    obstacleVec(inds) = [];
 
 end
 
-% insert diverted trajectory segments into planned trajectory
-trajFields = {'prevAnchor','xCoords','yCoords','velocity','heading'};
-if numel(entrances)>0
+% append remaining trajectory
+executedTrajectory = expandTrajectory(executedTrajectory,originalTrajectory,trajFields);
 
-    % remove any anchor points that fell within the obstacle:
-    [anchor_xCoords,anchor_yCoords] = pol2cart(trajectory.anchors.thCoords,trajectory.anchors.rCoords);
-    [~,anchorVec,~] = intersectTrajectory(anchor_xCoords,anchor_yCoords,...
-        agentView.xBounds(trial.blockIDs(trialID),:),...
-        agentView.yBounds(trial.blockIDs(trialID),:));
-    irem = find(anchorVec);
-    anchorFields = {'thCoords','rCoords','thTol','rTol'};
-    if numel(irem)>0
-        for i=1:numel(anchorFields)
-            trajectory.anchors.(anchorFields{i})(irem) = [];
-        end
-    end
-    trajectory.anchors.N = numel(trajectory.anchors.thCoords);
+% compute & store curvilinear distance along trajectory:
+executedTrajectory.distance = sum(dcart(executedTrajectory.xCoords,executedTrajectory.yCoords),'omitnan');
 
-    % store anchors and initial heading:
-    executedTrajectory.anchors  = trajectory.anchors;
-    executedTrajectory.phi      = trajectory.phi;
+% update anchors that were executed:
+executedTrajectory = updateAnchors(executedTrajectory,originalTrajectory,anchorFields);
 
+% store initial heading and boundary flag:
+executedTrajectory.delta        = trajectory.delta;
+executedTrajectory.boundaryFlag = trajectory.boundaryFlag;
+x = 5;
 
-    % store trajectory segment until first intersection with obstacle;
-    % update and store timepoints separately
-    for i=1:numel(trajFields)
-        executedTrajectory.(trajFields{i}) = trajectory.(trajFields{i})(1:entrances(1)-1);
-    end
+end
 
-    % intert trajectory segments that were diverted around obstacle
-    for i=1:numel(entrances)-1
-        nextAnchorID = boundarySegments{i}.prevAnchor(1)+1;
-        nextAnchorIndex = find(trajectory.prevAnchor==nextAnchorID,1,'first');
-        for j=1:numel(trajFields)
-            executedTrajectory.(trajFields{j}) = ...
-                [executedTrajectory.(trajFields{j}),...                         % existing trajectory up until obstacle entrance
-                boundarySegments{i}.(trajFields{j}),...                         % diverted trajectory: boundary segment
-                openSegments{i}.(trajFields{j}),...                             % diverted trajectory: open segment
-                trajectory.(trajFields{j})(nextAnchorIndex:entrances(i+1)-1)];  % remaining trajectory to next obstacle entrance
-        end
-    end
+function traj = updateAnchors(traj,origTraj,anchorFields)
+% extract unique anchor IDs
+executedAnchors = unique(traj.prevAnchor);
+executedAnchors = [executedAnchors,max(executedAnchors)+1];
 
-    % insert final diverted segment, and append segment after last 
-    % interaction with obstacle
-    nextAnchorID = boundarySegments{end}.prevAnchor(1)+1;
-    nextAnchorIndex = find(trajectory.prevAnchor==nextAnchorID,1,'first');
-    for i=1:numel(trajFields)
-        executedTrajectory.(trajFields{i}) = ...
-            [executedTrajectory.(trajFields{i}),...
-            boundarySegments{end}.(trajFields{i}),...
-            openSegments{end}.(trajFields{i}),...
-            trajectory.(trajFields{i})(nextAnchorIndex:numel(trajectory.(trajFields{i})))];
-    end
-    
-    % compute & store curvilinear distance along trajectory:
-    executedTrajectory.distance = dcart(executedTrajectory.xCoords,executedTrajectory.yCoords);
+anchors = planEmptyTrajectory(anchorFields);
+anchors = expandTrajectory(anchors,origTraj.anchors,anchorFields,executedAnchors);
+anchors.N = numel(anchors.thCoords);
 
+% update IDs of unique anchors
+anchorsUnique = unique(traj.prevAnchor);
+currentAnchor = 1;
+for i=1:numel(anchorsUnique)
+    ii = find(traj.prevAnchor==anchorsUnique(i));
+    traj.prevAnchor(ii) = currentAnchor;
+    currentAnchor = currentAnchor+1;
+end
+
+% append anchors
+traj.anchors = anchors;
+
+if any(diff(traj.prevAnchor)>1) || numel(unique(traj.prevAnchor))~=(traj.anchors.N-1)
+    error('mismatched anchors')
+end
+end
+
+function [exposedFace,indExposed] = getExposedFace(anchor,traj,agentView,blockID)
+% extract the obstacle faces that are exposed to the anchor point
+[exposedFace.xCoords,exposedFace.yCoords,exposedFace.exposedFaceID] = getSolidAngle(agentView,blockID,anchor.xCoords,anchor.yCoords);
+
+% find the point along the boundary segment that first intersects the
+% exposed faces of the obstacle (the first entry in 'indExposed')
+[~,indExposed,~] = intersect([traj.xCoords',traj.yCoords'],...
+    [exposedFace.xCoords',exposedFace.yCoords'],'rows','stable');
+
+end
+
+function [anchor,index] = extractNextAnchor(traj,agentView,blockID,intersectionType)
+
+% extract first anchor point after trajectory passes through obstacle
+prevAnchorID = traj.prevAnchor(1);
+nextAnchorID = prevAnchorID+1;
+[xAnchor,yAnchor] = pol2cart(traj.anchors.thCoords(nextAnchorID),...
+    traj.anchors.rCoords(nextAnchorID));
+
+% if next anchor is within the obstacle, select the subsequent anchor
+while intersectTrajectory(xAnchor,yAnchor,agentView.xBounds(blockID,:),agentView.yBounds(blockID,:),intersectionType)
+    nextAnchorID = nextAnchorID+1;
+    [xAnchor,yAnchor] = pol2cart(traj.anchors.thCoords(nextAnchorID),...
+        traj.anchors.rCoords(nextAnchorID));
+end
+anchor.xCoords  = xAnchor;
+anchor.yCoords  = yAnchor;
+anchor.thCoords = traj.anchors.thCoords(nextAnchorID);
+anchor.rCoords  = traj.anchors.rCoords( nextAnchorID);
+anchor.prevAnchorID = prevAnchorID;
+anchor.nextAnchorID = nextAnchorID;
+
+if nextAnchorID>max(traj.prevAnchor)
+    index = numel(traj.prevAnchor);
 else
-    executedTrajectory = trajectory;
+    index = find(traj.prevAnchor==nextAnchorID,1,'first');
+end
 end
 
+function boundarySeg = extractBoundarySegment(traj,agentView,boundaryAngles,blockID,extractFullBoundary)
+if nargin<5
+    extractFullBoundary = 0;
+end
+
+% determine which obstacle boundary the trajectory entered:
+% 1:bottom; 2:right; 3:top; 4:left
+[~,indStart] = min( abs(traj.xCoords(1)-agentView.xBoundary(blockID,:)) ...
+    + abs(traj.yCoords(1)-agentView.yBoundary(blockID,:)) );
+boundaryID   = find(histcounts(indStart,agentView.indCorners(blockID,:)));
+
+% determine the travel direction that minimizes the change in heading
+[~,orientation] = min(abs(wrapTo2Pi(traj.heading(1)) - boundaryAngles(boundaryID,:)));
+
+% extract oriented segment of boundary along which trajectory will be diverted
+xBoundary  = circshift(agentView.xBoundary(blockID,:),numel(agentView.xBoundary(blockID,:))-indStart+1);
+yBoundary  = circshift(agentView.yBoundary(blockID,:),numel(agentView.yBoundary(blockID,:))-indStart+1);
+heading    = circshift(agentView.heading(  blockID,:),numel(agentView.heading(  blockID,:))-indStart+1);
+corners    = circshift(agentView.corners(  blockID,:),numel(agentView.corners(  blockID,:))-indStart+1);
+if mod(orientation,2)==0
+    xBoundary = fliplr(xBoundary);
+    yBoundary = fliplr(yBoundary);
+    heading   = fliplr(heading);
+    heading   = wrapTo2Pi(heading+pi);
+    corners   = fliplr(corners);
+end
+
+if extractFullBoundary
+    indEnd = numel(xBoundary);
+else
+    [~,indEnd] = min(abs(traj.xCoords(end)-xBoundary) + abs(traj.yCoords(end)-yBoundary));
+end
+boundarySeg.xCoords = xBoundary(1:indEnd);
+boundarySeg.yCoords = yBoundary(1:indEnd);
+boundarySeg.heading = heading(  1:indEnd);
+boundarySeg.corners = corners(  1:indEnd);
+boundarySeg.entryFaceID = boundaryID;
+
+end
+
+function trajSeg = extractTrajectorySegment(traj,indsSegment,trajFields)
+for i=1:numel(trajFields)
+    trajSeg.(trajFields{i}) = traj.(trajFields{i})(indsSegment);
+end
+end
+
+function openFieldTrajectory = generateOpenFieldTrajectory(traj,boundarySegment,nextAnchor,trajectoryInds,planner)
+% once trajectory reaches the first exposed corner of the obstacle, use the
+% corner as an anchor, and generate a trajectory to the next anchor:
+[openFieldAnchors.thCoords,openFieldAnchors.rCoords] = cart2pol(boundarySegment.xCoords(1),boundarySegment.yCoords(1));
+openFieldAnchors.thCoords = [openFieldAnchors.thCoords,traj.anchors.thCoords(nextAnchor.nextAnchorID)];
+openFieldAnchors.rCoords  = [openFieldAnchors.rCoords, traj.anchors.rCoords( nextAnchor.nextAnchorID)];
+openFieldAnchors.N = numel(openFieldAnchors.thCoords);
+
+% choose initial heading s.t. agent initially follows obstacle boundary 
+% before peeling away; if this generates a large discontinuity in heading
+% at next anchor point, choose direct path. 
+initialHeading = boundarySegment.heading(1);
+
+[dth, ~] = dpol(openFieldAnchors.thCoords,openFieldAnchors.rCoords);
+delta    = initialHeading-dth+pi/2;
+deltaSet = [delta,pi/2];
+
+% if the next anchor point is the final one (i.e., the home port), peel
+% away from the boundary (i.e., choose first of allowed initial headings)
+if nextAnchor.nextAnchorID==max(traj.prevAnchor)+1
+    delta = deltaSet(1);
+
+% otherwise, choose the initial heading that minimizes the difference
+% with the subsequent heading
+else
+    angleVec = [-2*pi,0,2*pi]';
+    nextAnchorHeading = traj.heading(trajectoryInds.nextAnchor);
+    finalHeading = pi/2+dth-deltaSet;
+    [~,indMin] = min(min(abs(finalHeading-(nextAnchorHeading-angleVec)),[],1));
+    delta = deltaSet(indMin);
+end
+
+openFieldTrajectory = planTrajectory(openFieldAnchors,delta,planner,1);
+openFieldTrajectory.prevAnchor = (nextAnchor.prevAnchorID).*ones(1,numel(openFieldTrajectory.xCoords));
+
+end
+
+function [boundaryTrajectory,boundaryInds] = generateBoundaryTrajectory(boundarySegment,nextAnchor,boundaryInds,planner)
+boundaryInds.exitPoint = numel(boundarySegment.xCoords);
+boundaryInds.boundary  = 1:numel(boundarySegment.xCoords);
+boundaryInds.corners   = find(boundarySegment.corners);
+boundaryInds.anchors   = [1,boundaryInds.corners,boundaryInds.exitPoint];
+
+[boundaryAnchors.thCoords,boundaryAnchors.rCoords] = cart2pol(boundarySegment.xCoords(boundaryInds.anchors),boundarySegment.yCoords(boundaryInds.anchors));
+boundaryAnchors.N  = numel(boundaryAnchors.thCoords);
+boundaryTrajectory = planTrajectory(boundaryAnchors,pi/2,planner,1);
+boundaryTrajectory.prevAnchor = (nextAnchor.prevAnchorID).*ones(1,numel(boundaryTrajectory.xCoords));
+end
+
+function traj = expandTrajectory(traj,segment,trajFields,indsSegment)
+if nargin<4
+    indsSegment = 1:numel(segment.(trajFields{1}));
+end
+for i=1:numel(trajFields)
+    traj.(trajFields{i}) = ...
+        [traj.(trajFields{i}),...
+        segment.(trajFields{i})(indsSegment)];
+end
+end
+
+function [traj1,traj2] = splitTrajectory(traj,trajFields,indSplit,indEnd)
+for i=1:numel(trajFields)
+    traj1.(trajFields{i}) = traj.(trajFields{i})(1:indSplit);
+    traj2.(trajFields{i}) = traj.(trajFields{i})(indSplit+1:indEnd);
+end
+end
+
+function traj = trimTrajectory(traj,trajFields,indsTrim)
+for i=1:numel(trajFields)
+    traj.(trajFields{i})(indsTrim) = [];
+end
+end
+
+function traj = planEmptyTrajectory(trajFields)
+for i=1:numel(trajFields)
+    traj.(trajFields{i}) = [];
+end
 end
 
 function [xFace,yFace,exposedFaceID] = getSolidAngle(agentView,blockID,xAnchor,yAnchor)
@@ -244,7 +400,7 @@ yFace = [];
 for i=1:4
     exposedFace(i) = intersectTrajectory(xAnchor,yAnchor,...
         agentView.block(blockID).region(i).xBounds,...
-        agentView.block(blockID).region(i).yBounds);
+        agentView.block(blockID).region(i).yBounds,'inside');
     if exposedFace(i)
         xFace = [xFace,agentView.block(blockID).region(i).xBoundary];
         yFace = [yFace,agentView.block(blockID).region(i).yBoundary];
