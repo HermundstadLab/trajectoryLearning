@@ -21,7 +21,7 @@ if strcmp(envType,'default')
     targetParams.aspectRatio     = 1;           % aspect ratio of target (height relative to width)
 
     obstacleParams.relativeWidth = 0.4;         % width of obstacle, relative to arena
-    obstacleParams.aspectRatio   = 0.25;        % aspect ratio of obstacle (height relative to width)
+    obstacleParams.aspectRatio   = 0.1;         % aspect ratio of obstacle (height relative to width)
 
 %elseif strcmp(envType,'new env type')          % uncomment to add new environments
 else
