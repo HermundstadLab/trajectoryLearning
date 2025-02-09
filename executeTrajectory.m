@@ -12,11 +12,6 @@ function [executedTrajectory,obstacleHit] = executeTrajectory(trajectory,arena,t
 %
 %   See also: PLANTRAJECTORY, BOUNDTRAJECTORY, DIVERTTRAJECTORY
 
-% planner.boundaryTol = 1e-6;
-% homeInds = find(abs(trajectory.xCoords-0)<planner.boundaryTol & abs(trajectory.yCoords-0)<planner.boundaryTol);
-% trajectory.xCoords(homeInds) = 0;
-% trajectory.yCoords(homeInds) = 0;
-
 % determine whether trajectory would pass through obstacle
 obstacleHit = intersectTrajectory(trajectory.xCoords,trajectory.yCoords,...
     trial.obstacle.xBounds(trial.blockIDs(trialID),:),...
