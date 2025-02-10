@@ -73,10 +73,9 @@ for i=2:anchors.N
     trajectory.distance   = trajectory.distance + dist(isel); 
 
     % update initial condition
-    x0     = xtmp(isel,end);
-    y0     = ytmp(isel,end);
-    dth0   = dth;
-    delta0 = delta;
+    [x0,y0] = pol2cart(anchors.thCoords(i),anchors.rCoords(i));
+    dth0    = dth;
+    delta0  = delta;
     
 end
 
