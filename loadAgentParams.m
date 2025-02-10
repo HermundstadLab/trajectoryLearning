@@ -28,7 +28,7 @@ if strcmp(agentType,'default')
 
     agentParams.anchorTolMerge    = 0.05;                   % tolerance for merging anchors (n.u.)
     agentParams.anchorTolShift    = 0.005;                  % tolerance for shifting anchors (n.u.)                                        
-    agentParams.anchorMax         = 10;                     % maximum number of anchors
+    agentParams.anchorMax         = 9;                      % maximum number of anchors
     agentParams.anchorTolScaling  = true;                   % determines whether to scale tolerances around individual anchors 
                                                             % options: true (scale tolerances based on width of posterior peaks)
                                                             %          false (used fixed tolerance for all anchors)
