@@ -20,7 +20,7 @@ errormap     = belief.mask.*zeros(belief.np,belief.np);
 [outcome,reward,probOutcome,...
     probReward,nAnchors_executed,...
     nAnchors_planned,cache,...
-    obstacleHit]                    = deal(nan(trial.nTrials,1));
+    entropy,obstacleHit]            = deal(nan(trial.nTrials,1));
     
 
 %------------------------- run learning algorithm ------------------------%
@@ -60,7 +60,7 @@ for trialID=1:trial.nTrials
     errormap = updateErrormap(plannedLikelihood,executedLikelihood,errormap);
 
     % update belief based on executed trajectory and outcome
-    [posterior,cache(trialID)] = updateBelief(prior,executedLikelihood,outcome(trialID),cacheSignal,belief);
+    [posterior,cache(trialID),entropy(trialID)] = updateBelief(prior,executedLikelihood,outcome(trialID),cacheSignal,belief);
 
     %------------------------ append results ---------------------------%
     likelihoods(:,:,trialID) = executedLikelihood(:,:,outcome(trialID));
@@ -97,5 +97,6 @@ simResults.belief.errormaps     = errormaps;
 simResults.belief.cacheSignal   = cacheSignal;
 simResults.belief.probReward    = probReward;
 simResults.belief.cache         = cache;
+simResults.belief.entropy       = entropy;
 
 end
