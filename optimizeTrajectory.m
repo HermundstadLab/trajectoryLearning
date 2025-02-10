@@ -93,16 +93,26 @@ end
         err  = traj.distance;
     end
 
+% determine whether trajectory would hit arena boundaries
+arenaHit = intersectTrajectory(trajectory.xCoords,trajectory.yCoords,...
+    planner.boundary.xBounds,planner.boundary.yBounds,'outside');
+
+% if trajectory would hit arena boundary, bound trajectory along it
+if arenaHit
+    trajectory = boundTrajectory(trajectory,planner.boundary.xBounds,planner.boundary.yBounds);
+end
+
+
 end
 
 function anchors = updateAnchorOrder(boundaryAnchors,boundaryAnchorFlag,planner)
 % Combines boundary anchors with anchors positioned at corners of arena, 
 % and orders the set of anchors along the boundary of the arena
 
-thCoords = [planner.boundaryTrajectory.anchors.thCoords(2:end-1),boundaryAnchors.thCoords(boundaryAnchorFlag>0)];
-rCoords  = [planner.boundaryTrajectory.anchors.rCoords( 2:end-1),boundaryAnchors.rCoords( boundaryAnchorFlag>0)];
+thCoords = [planner.boundary.anchors.thCoords(2:end-1),boundaryAnchors.thCoords(boundaryAnchorFlag>0)];
+rCoords  = [planner.boundary.anchors.rCoords( 2:end-1),boundaryAnchors.rCoords( boundaryAnchorFlag>0)];
 
- % group anchors based on their angle
+% group anchors based on their angle
 i1 = find(thCoords==0);
 i2 = find(thCoords>0 & thCoords<pi);
 i3 = find(thCoords==pi);

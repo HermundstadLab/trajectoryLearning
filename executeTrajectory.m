@@ -24,15 +24,6 @@ else
     executedTrajectory = trajectory;
 end
 
-% determine whether trajectory would hit arena boundaries
-arenaHit = intersectTrajectory(executedTrajectory.xCoords,executedTrajectory.yCoords,...
-    trial.arena.xBounds,trial.arena.yBounds,'outside');
-
-% if trajectory would hit arena boundary, bound trajectory along it
-if arenaHit
-    executedTrajectory = boundTrajectory(executedTrajectory,arena.xBounds,arena.yBounds);
-end
-
 end
 
 

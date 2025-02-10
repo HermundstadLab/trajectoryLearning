@@ -181,7 +181,9 @@ yCoords = [min(yBounds_agent),min(yBounds_agent),max(yBounds_agent),max(yBounds_
 [anchors.thCoords,anchors.rCoords] = cart2pol(xCoords,yCoords);
 anchors.N = numel(anchors.thCoords);
 
-planner.boundaryTrajectory = planTrajectory(anchors,pi/2,planner,true);
+planner.boundary.anchors = anchors;
+planner.boundary.xBounds = xBounds_agent;
+planner.boundary.yBounds = yBounds_agent;
 
 end
 
