@@ -146,7 +146,7 @@ belief.cacheThreshold = agentParams.cacheThreshold;                 % surprise t
 belief.cacheWindow    = agentParams.cacheWindow;                    % number of successive timepoints that cache signal must exceed threshold
 belief.mask           = createPosteriorMask(belief);                % create posterior mask based on arena bounds
 belief.cache          = agentParams.cacheFlag;                      % determines whether to cache posterior
-belief.boundaryTol    = agentParams.anchorTolShift;                 % tolerance for determining boundary anchors
+belief.boundaryTol    = 1./belief.np;                               % tolerance for determining boundary anchors
 
 
 %---------------------- build sampler structure --------------------------%
