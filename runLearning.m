@@ -20,9 +20,9 @@ errormap     = belief.mask.*zeros(belief.np,belief.np);
 [outcome,reward,probOutcome,...
     probReward,nAnchors_executed,...
     nAnchors_planned,cache,...
-    entropy,obstacleHit]            = deal(nan(trial.nTrials,1));
+    entropy,obstacleHit,...
+    boundaryFlag       ]            = deal(nan(trial.nTrials,1));
     
-
 %------------------------- run learning algorithm ------------------------%
 for trialID=1:trial.nTrials
 
@@ -41,6 +41,7 @@ for trialID=1:trial.nTrials
 
     % execute trajectory; adjust based on arena boundaries and obstacles
     [executedTrajectory,obstacleHit(trialID)] = executeTrajectory(plannedTrajectory,arena,trial,planner,trialID);
+    boundaryFlag(trialID) = executedTrajectory.boundaryFlag;
 
     % use planned and executed trajectories to compute likelihood
     plannedLikelihood  = getLikelihood(plannedTrajectory, belief);
@@ -89,6 +90,7 @@ simResults.trajectory.nAnchorsExecuted = nAnchors_executed;
 simResults.trajectory.nAnchorsPlanned  = nAnchors_planned;
 simResults.trajectory.rewards          = reward;
 simResults.trajectory.obstacleHits     = obstacleHit;
+simResults.trajectory.boundaryFlag     = boundaryFlag;
 
 simResults.belief.prior         = uniformPrior;
 simResults.belief.likelihoods   = likelihoods;
