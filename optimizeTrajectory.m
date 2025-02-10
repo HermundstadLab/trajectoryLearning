@@ -16,22 +16,23 @@ function trajectory = optimizeTrajectory(anchors,belief,planner)
 
 %---------------------- check for boundary run ---------------------------%
 % if majority of anchors lie along the boundary, plan boundary run
-boundaryAnchors = checkBoundary(anchors,belief);
-if mean(boundaryAnchors)>0.5
+[boundaryAnchorFlag,boundaryAnchors] = checkBoundary(anchors,belief);
+if mean(boundaryAnchorFlag)>0.5
 
-    trajectory = planner.boundaryTrajectory;
+    newAnchors = updateAnchorOrder(boundaryAnchors,boundaryAnchorFlag,planner);
+    trajectory = planTrajectory(newAnchors,pi/2,planner,1);
 
 % otherwise, execute normal run
 else
 
-    %---------------------- optimizing anchor order --------------------------%
+    %---------------------- optimize anchor order ------------------------%
     % determine optimal ordering of anchors
     anchorsOrdered = orderAnchors(anchors,planner);
     
     
-    %-------------------- optimizing anchor locations ------------------------%
-    % determine specific placement of anchors, within some tolerance of their
-    % original locations
+    %-------------------- optimize anchor locations ----------------------%
+    % determine specific placement of anchors, within some tolerance of 
+    % their original locations
     nAnchors = anchorsOrdered.N;
     
     if planner.scaleTol
@@ -94,7 +95,31 @@ end
 
 end
 
-function boundaryAnchors = checkBoundary(anchors,belief)
+function anchors = updateAnchorOrder(boundaryAnchors,boundaryAnchorFlag,planner)
+% Combines boundary anchors with anchors positioned at corners of arena, 
+% and orders the set of anchors along the boundary of the arena
+
+thCoords = [planner.boundaryTrajectory.anchors.thCoords(2:end-1),boundaryAnchors.thCoords(boundaryAnchorFlag>0)];
+rCoords  = [planner.boundaryTrajectory.anchors.rCoords( 2:end-1),boundaryAnchors.rCoords( boundaryAnchorFlag>0)];
+
+ % group anchors based on their angle
+i1 = find(thCoords==0);
+i2 = find(thCoords>0 & thCoords<pi);
+i3 = find(thCoords==pi);
+
+% sort with each group
+[~,isort1] = sort(rCoords( i1),'ascend');
+[~,isort2] = sort(thCoords(i2),'ascend');
+[~,isort3] = sort(rCoords( i3),'descend');
+
+% append sorted anchors
+anchors.thCoords = [0,thCoords(i1(isort1)),thCoords(i2(isort2)),thCoords(i3(isort3)),0];
+anchors.rCoords  = [0,rCoords( i1(isort1)),rCoords( i2(isort2)),rCoords( i3(isort3)),0];
+anchors.N        = numel(anchors.thCoords);
+
+end
+
+function [boundaryAnchors,anchors] = checkBoundary(anchors,belief)
 % Returns a binary vector whose nonzero entries flag anchors within a given
 % tolerance of the arena boundary
 
@@ -103,25 +128,16 @@ dr  = abs(anchors.rCoords -belief.rBoundary' );
 [~,ind] = min(dr+dth);
 
 dist = nan(1,anchors.N);
+boundaryAnchors = zeros(1,anchors.N);
 for i=1:anchors.N
     [~,dist(i)] = dpol([anchors.thCoords(i),belief.thBoundary(ind(i))]./diff(belief.thBounds),...
         [anchors.rCoords(i),belief.rBoundary(ind(i))]./diff(belief.rBounds));
+
+    if dist(i)<belief.boundaryTol
+        boundaryAnchors(i)  = 1;
+        anchors.thCoords(i) = belief.thBoundary(ind(i));
+        anchors.rCoords(i)  = belief.rBoundary( ind(i));
+    end
 end
-boundaryAnchors = zeros(1,anchors.N);
-boundaryAnchors(dist<belief.boundaryTol) = 1;
 
-end
-
-function trajectory = createBoundaryTrajectory(anchors,planner)
-trajectory.anchors = anchors;
-trajectory.delta = nan;
-
-nTimePts = numel(planner.boundaryTrajectory.xCoords);
-trajectory.prevAnchor = ones(1,nTimePts);
-trajectory.xCoords  = planner.boundaryTrajectory.xCoords;
-trajectory.yCoords  = planner.boundaryTrajectory.yCoords;
-trajectory.velocity = planner.boundaryTrajectory.velocity;
-trajectory.heading  = planner.boundaryTrajectory.heading;
-trajectory.timepts  = [];
-trajectory.distance = planner.boundaryTrajectory.distance;
 end
