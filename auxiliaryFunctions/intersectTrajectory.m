@@ -1,4 +1,4 @@
-function [intersect,intersection,inds] = intersectTrajectory(xCoords,yCoords,xBounds,yBounds)
+function [intersect,intersection,inds] = intersectTrajectory(xCoords,yCoords,xBounds,yBounds,intersectionType)
 % INTERSECTTRAJECTORY Determines whether a set of trajectory coordinates
 % intersects a rectangular bounded region. 
 %
@@ -14,11 +14,17 @@ function [intersect,intersection,inds] = intersectTrajectory(xCoords,yCoords,xBo
 inds = find(xCoords>=xBounds(1) & xCoords<=xBounds(2) ...
 & yCoords>=yBounds(1) & yCoords<=yBounds(2));
 
-if numel(inds)>0
+intersection = zeros(size(xCoords));
+intersection(inds) = 1;
+
+if strcmp(intersectionType,'outside')==1
+    intersection = 1-intersection;
+end
+
+if numel(find(intersection>0))>0
     intersect = 1;
 else
     intersect = 0;
 end
-intersection = zeros(size(xCoords));
-intersection(inds) = 1;
+
 end
