@@ -153,7 +153,7 @@ belief.boundaryTol    = 1./belief.np;                               % tolerance 
 
 sampler.minPeakDist    = agentParams.anchorTolMerge.*belief.np;     % min distance between peaks in posterior (n.u.)
 sampler.minPeakHeight  = 1./(belief.np.^2);                         % min height of peaks in posterior (n.u.)
-sampler.nAnchorsMax    = agentParams.anchorMax;                     % maximum number of anchors
+sampler.nAnchorsInit   = agentParams.anchorInit;                    % maximum number of anchors
 sampler.errorThreshold = agentParams.errorThreshold;                % error threshold for augmenting anchors points
 
 

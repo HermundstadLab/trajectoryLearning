@@ -22,13 +22,13 @@ if strcmp(agentType,'default')
     
     agentParams.cacheThreshold    = 1.75;                   % threshold for caching posterior
     agentParams.cacheWindow       = 2;                      % number of successive timepoints for which cache signal must exceed threshold
-    agentParams.cacheFlag         = true;                   % determines whether to cache posterior;
+    agentParams.cacheFlag         = false;                  % determines whether to cache posterior;
                                                             % options: true (reset to uniform prior when cache signal exceeds threshold)
                                                             %          false (never reset to uniform prior) 
 
     agentParams.anchorTolMerge    = 0.05;                   % tolerance for merging anchors (n.u.)
     agentParams.anchorTolShift    = 0.005;                  % tolerance for shifting anchors (n.u.)                                        
-    agentParams.anchorMax         = 9;                      % maximum number of anchors
+    agentParams.anchorInit        = 8;                      % initial number of anchors
     agentParams.anchorTolScaling  = true;                   % determines whether to scale tolerances around individual anchors 
                                                             % options: true (scale tolerances based on width of posterior peaks)
                                                             %          false (used fixed tolerance for all anchors)

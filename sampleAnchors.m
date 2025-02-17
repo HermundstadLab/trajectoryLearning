@@ -34,7 +34,7 @@ peaks.values   = pkssort./sum(pkssort);
 
 if numel(pks)<1
     % if there are no peaks in the map, randomly sample the maximum number of anchors
-    nk = sampler.nAnchorsMax;
+    nk = sampler.nAnchorsInit;
 
     % remove nans before sampling
     lininds = find(~isnan(map));
