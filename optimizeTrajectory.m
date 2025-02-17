@@ -17,7 +17,7 @@ function trajectory = optimizeTrajectory(anchors,belief,planner)
 %---------------------- check for boundary run ---------------------------%
 % if majority of anchors lie along the boundary, plan boundary run
 [boundaryAnchorFlag,boundaryAnchors] = checkBoundary(anchors,belief);
-if mean(boundaryAnchorFlag)>0.5
+if numel(boundaryAnchorFlag)>1 & mean(boundaryAnchorFlag)>0.5
 
     newAnchors = updateAnchorOrder(boundaryAnchors,boundaryAnchorFlag,planner);
     trajectory = planTrajectory(newAnchors,pi/2,planner,1);
@@ -112,6 +112,11 @@ function anchors = updateAnchorOrder(boundaryAnchors,boundaryAnchorFlag,planner)
 thCoords = [planner.boundary.anchors.thCoords(2:end-1),boundaryAnchors.thCoords(boundaryAnchorFlag>0)];
 rCoords  = [planner.boundary.anchors.rCoords( 2:end-1),boundaryAnchors.rCoords( boundaryAnchorFlag>0)];
 
+% remove redundant anchors
+anchors_unique  = unique([thCoords',rCoords'],'rows');
+thCoords = anchors_unique(:,1)';
+rCoords  = anchors_unique(:,2)';
+
 % group anchors based on their angle
 i1 = find(thCoords==0);
 i2 = find(thCoords>0 & thCoords<pi);
@@ -124,7 +129,7 @@ i3 = find(thCoords==pi);
 
 % append sorted anchors
 anchors.thCoords = [0,thCoords(i1(isort1)),thCoords(i2(isort2)),thCoords(i3(isort3)),0];
-anchors.rCoords  = [0,rCoords( i1(isort1)),rCoords( i2(isort2)),rCoords( i3(isort3)),0];
+anchors.rCoords  = [0, rCoords(i1(isort1)), rCoords(i2(isort2)), rCoords(i3(isort3)),0];
 anchors.N        = numel(anchors.thCoords);
 
 end
