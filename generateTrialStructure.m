@@ -18,8 +18,8 @@ function trial = generateTrialStructure(arena,target,obstacle,planner,trialParam
 %---------------------- target arrangement -------------------------------%
 if strcmp(trialParams.targetArrangement,'radial')
     % define N targets arranged radially around home port
-    thcTarget = linspace(0,pi,trialParams.nTargets+2);                  % define targets on semi-circle
-    thcTarget([1,trialParams.nTargets+2])=[];                           % remove edges
+    thcTarget = linspace(0,pi,trialParams.nTargets+4);                  % define targets on semi-circle
+    thcTarget([1,2,trialParams.nTargets+3,trialParams.nTargets+4])=[];  % remove edges
     [~,isort] = sort(abs(thcTarget-pi/2),'descend');                    % sort so that targets begin at center 
     thcTarget = thcTarget([isort(end),isort(1:end-1)]);                 %   and alternate around center
 
