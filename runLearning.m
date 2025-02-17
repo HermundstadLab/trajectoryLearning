@@ -1,4 +1,4 @@
-function simResults = runLearning(arena,belief,sampler,planner,trial)
+function simResults = runLearning(belief,sampler,planner,trial)
 % RUNLEARNING Simulates an agent that learns to intercept a target.
 %
 %   simResults = RUNLEARNING(arena,belief,sampler,planner,trial) takes as 
@@ -19,10 +19,11 @@ errormap     = belief.mask.*zeros(belief.np,belief.np);
 [traj_executed,traj_planned]        = deal(cell(1,trial.nTrials));
 [outcome,reward,probOutcome,...
     probReward,nAnchors_executed,...
-    nAnchors_planned,cache,...
+    nAnchors_planned,distance_executed,...
+    distance_planned,cache,...
     entropy,obstacleHit,...
-    boundaryFlag       ]            = deal(nan(trial.nTrials,1));
-    
+    boundaryFlag           ]        = deal(nan(trial.nTrials,1));
+
 %------------------------- run learning algorithm ------------------------%
 for trialID=1:trial.nTrials
 
@@ -40,7 +41,7 @@ for trialID=1:trial.nTrials
     plannedTrajectory = evaluateTrajectory(plannedTrajectory,errormap,belief,sampler,planner);
 
     % execute trajectory; adjust based on arena boundaries and obstacles
-    [executedTrajectory,obstacleHit(trialID)] = executeTrajectory(plannedTrajectory,arena,trial,planner,trialID);
+    [executedTrajectory,obstacleHit(trialID)] = executeTrajectory(plannedTrajectory,trial,planner,trialID);
     boundaryFlag(trialID) = executedTrajectory.boundaryFlag;
 
     % use planned and executed trajectories to compute likelihood
@@ -77,9 +78,13 @@ for trialID=1:trial.nTrials
     % store full executed trajectory
     traj_executed{trialID} = executedTrajectory;
 
-    % store numbers of planned and executed anchors in accessible field
+    % store numbers of planned and executed anchors, and path lengths,
+    % in accessible field
     nAnchors_executed(trialID,1) = executedTrajectory.anchors.N;
     nAnchors_planned( trialID,1) = plannedTrajectory.anchors.N;
+
+    distance_executed(trialID,1) = executedTrajectory.distance;
+    distance_planned( trialID,1) = plannedTrajectory.distance;
 
 end
 
@@ -88,6 +93,8 @@ simResults.trajectory.executed         = traj_executed;
 simResults.trajectory.planned          = traj_planned;
 simResults.trajectory.nAnchorsExecuted = nAnchors_executed;
 simResults.trajectory.nAnchorsPlanned  = nAnchors_planned;
+simResults.trajectory.distanceExecuted = distance_executed;
+simResults.trajectory.distancePlanned  = distance_planned;
 simResults.trajectory.rewards          = reward;
 simResults.trajectory.obstacleHits     = obstacleHit;
 simResults.trajectory.boundaryFlag     = boundaryFlag;
