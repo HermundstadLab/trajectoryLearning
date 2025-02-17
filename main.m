@@ -60,7 +60,7 @@ envType   = 'default';
 agentType = 'default';
 [arenaParams,targetParams,obstacleParams] = loadEnvironmentParams(envType);
 agentParams                               = loadAgentParams(agentType);
-[arena,belief,sampler,planner,target,obstacle] = generateEnvironment(arenaParams,targetParams,obstacleParams,agentParams);
+[arena,belief,sampler,planner,target,obstacle] = generateAgentEnvironment(arenaParams,targetParams,obstacleParams,agentParams);
 
 % generate trial protocol
 %   current options: 'singleTarget', 'multiTarget', 'obstacle'
@@ -75,7 +75,7 @@ trial = generateTrialStructure(arena,target,obstacle,planner,trialParams);
 agent = load('exampleAgent.mat');
 
 trialID = 2;
-plotSingleTrial(agent.simResults,agent.arena,agent.belief,agent.trial,trialID,plotParams);
+plotSingleTrial(agent.simResults,agent.belief,agent.trial,trialID,plotParams);
 
 % to simulate a new agent, run:
 %   simResults = runLearning(arena,belief,sampler,planner,trial);
@@ -84,23 +84,7 @@ plotSingleTrial(agent.simResults,agent.arena,agent.belief,agent.trial,trialID,pl
 
 %% simulate many agents, store results, and plot results averaged across agents
 
-nAgents    = 50;
-rewardRate = [];
-pReward    = [];
-surprise   = [];
-nAnchors   = [];
-cache      = [];
-
-parfor i=1:nAgents
-    disp(['running agent ',num2str(i)]);
-    simResults = runLearning(arena,belief,sampler,planner,trial);
-    rewardRate = [rewardRate, simResults.trajectory.rewards         ]; 
-    nAnchors   = [nAnchors,   simResults.trajectory.nAnchorsPlanned ];
-   
-    pReward    = [pReward,    simResults.belief.probReward  ];
-    surprise   = [surprise,   simResults.belief.cacheSignal ];     
-    cache      = [cache,      simResults.belief.cache       ];     
-end
+multiAgentResults = runMultipleAgents(50,arena,belief,sampler,planner,trial);
 
 
 

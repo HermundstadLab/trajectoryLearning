@@ -1,4 +1,4 @@
-function [executedTrajectory,obstacleHit] = executeTrajectory(trajectory,arena,trial,planner,trialID)
+function [executedTrajectory,obstacleHit] = executeTrajectory(trajectory,trial,planner,trialID)
 % EXECUTETRAJECTORY Execute planned trajectory, accounting for arena
 % boundaries and obstacles.
 %
