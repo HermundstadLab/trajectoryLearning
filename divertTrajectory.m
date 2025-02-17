@@ -355,7 +355,8 @@ function [boundaryTrajectory,boundaryInds] = generateBoundaryTrajectory(boundary
 boundaryInds.exitPoint = numel(boundarySegment.xCoords);
 boundaryInds.boundary  = 1:numel(boundarySegment.xCoords);
 boundaryInds.corners   = find(boundarySegment.corners);
-boundaryInds.anchors   = [1,boundaryInds.corners,boundaryInds.exitPoint];
+boundaryInds.anchors   = sort(unique([1,boundaryInds.corners,boundaryInds.exitPoint]));
+
 
 [boundaryAnchors.thCoords,boundaryAnchors.rCoords] = cart2pol(boundarySegment.xCoords(boundaryInds.anchors),boundarySegment.yCoords(boundaryInds.anchors));
 boundaryAnchors.N  = numel(boundaryAnchors.thCoords);
