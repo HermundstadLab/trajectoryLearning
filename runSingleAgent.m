@@ -1,7 +1,7 @@
-function simResults = runLearning(belief,sampler,planner,trial)
-% RUNLEARNING Simulates an agent that learns to intercept a target.
+function simResults = runSingleAgent(belief,sampler,planner,trial)
+% RUNSINGLEAGENT Simulates an agent that learns to intercept a target.
 %
-%   simResults = RUNLEARNING(arena,belief,sampler,planner,trial) takes as 
+%   simResults = RUNSINGLEAGENT(arena,belief,sampler,planner,trial) takes as 
 %   input several structures that specify properties of the arena (in 'arena'), 
 %   properties of the agent (in 'belief', 'sampler', and 'planner'), and 
 %   the trial protocol (in 'trial'), and returns a structure that contains
