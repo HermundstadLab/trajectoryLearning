@@ -20,7 +20,7 @@ function trajectory = optimizeTrajectory(anchors,belief,planner)
 if numel(boundaryAnchorFlag)>1 & mean(boundaryAnchorFlag)>0.5
 
     newAnchors = updateAnchorOrder(boundaryAnchors,boundaryAnchorFlag,planner);
-    trajectory = planTrajectory(newAnchors,pi/2,planner,1);
+    trajectory = planTrajectory(newAnchors,0,planner,1);
 
 % otherwise, execute normal run
 else
@@ -46,8 +46,8 @@ else
     drUB  = drLB;                                       % radial shift,  upper bound 
     
     [dth,~] = dpol(anchorsOrdered.thCoords(1:2),anchorsOrdered.rCoords(1:2));
-    deltaMin = max(0,pi/2-dth);
-    deltaMax = min(pi,3*pi/2-dth);
+    deltaMin = max(0,-dth);
+    deltaMax = min(pi,pi-dth);
 
     % define bounds for optimization (defined by the maximum of the lower bound
     % and the minimum boundaries of the arena, and similarly by the minimum of
@@ -75,7 +75,7 @@ else
         anchorsOpt.thTol    = anchorsOrdered.thTol;
         anchorsOpt.rTol     = anchorsOrdered.rTol;
         anchorsOpt.N        = nAnchors;
-        deltaOpt              = pmin(end);
+        deltaOpt            = pmin(end);
     
         trajectory = planTrajectory(anchorsOpt,deltaOpt,planner);
     else

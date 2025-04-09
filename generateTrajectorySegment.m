@@ -1,4 +1,4 @@
-function [xtraj,ytraj,vtraj,htraj,d] = generateTrajectorySegment(t,dth,dr,delta,T)
+function [xtraj,ytraj,vtraj,htraj,d] = generateTrajectorySegment(t,dth,dr,delta,planner)
 % GENERATETRAJECTORYSEGMENT Generates a trajectory that, once appropriately
 % offset, links a pair of anchor points.
 %   [xtraj,ytraj,vtraj,htraj,d] = GENERATETRAJECTORYSEGMENT(t,dth,dr,delta,T) 
@@ -23,29 +23,28 @@ function [xtraj,ytraj,vtraj,htraj,d] = generateTrajectorySegment(t,dth,dr,delta,
 %   T   = total time to travel between two anchors
 
 % define auxiliary parameters
-m     =  (  pi-2*delta)./T;
-alpha =  (3*pi-2*delta)./T;
-beta  = -(  pi+2*delta)./T;
-omega =  (2*pi      )./T;
-phi   = delta+dth-pi/2;
+gamma = delta./pi;
+phi   = delta+dth;
+omega = 2.*pi.*planner.rScale./dr;
 
 % generate speed and heading over time
-A = (-2.*dr.*alpha.*beta)./(omega.^2.*T.*sinc(m.*T/(2.*pi)));
-vtraj = (A/2).*(1-cos(omega.*t));
-htraj = m*t+phi;
+A = 2*planner.rScale.*(1-gamma.^2)./sinc(gamma);
+vtraj = (A/2).*(1-cos(omega*t));
+htraj = phi-omega.*gamma.*t;
 
-% generate cartesian trajectory (closed-form solution to the integrals
-B  = -dr./(omega.^2.*T.*sinc(m.*T/(2*pi)));
-Cx =  alpha.*beta.*(cos(phi).*sinc(m.*t/pi)-sin(phi).*sin(m.*t./2).*sinc(m.*t./(2.*pi)));
-Cy =  alpha.*beta.*(sin(phi).*sinc(m.*t/pi)+cos(phi).*sin(m.*t./2).*sinc(m.*t./(2.*pi)));
+% generate cartesian trajectory (closed-form solution to the integrals)
+B = planner.rScale./sinc(gamma);
 
-Dx =  m.*sin(phi) - (1./2).*(alpha.*sin(phi+beta.*t) + beta.*sin(phi+alpha.*t));
-Dy = -m.*cos(phi) + (1./2).*(alpha.*cos(phi+beta.*t) + beta.*cos(phi+alpha.*t));
+Cx = (1-gamma.^2).*(cos(phi).*sinc(omega.*gamma.*t/pi)+sin(phi).*sin(omega.*gamma.*t/2).*sinc(omega.*gamma.*t./(2*pi)));
+Cy = (1-gamma.^2).*(sin(phi).*sinc(omega.*gamma.*t/pi)-cos(phi).*sin(omega.*gamma.*t/2).*sinc(omega.*gamma.*t./(2*pi)));
+
+Dx =  1./(2.*omega).*(2.*gamma.*sin(phi)+(1-gamma).*sin(phi-omega.*(1+gamma).*t)-(1+gamma).*sin(phi+omega.*(1-gamma).*t));
+Dy = -1./(2.*omega).*(2.*gamma.*cos(phi)+(1-gamma).*cos(phi-omega.*(1+gamma).*t)-(1+gamma).*cos(phi+omega.*(1-gamma).*t));
 
 xtraj = B.*(Cx.*t + Dx);
 ytraj = B.*(Cy.*t + Dy);
 
 % compute curvilinear distance along trajectory
-d = abs(A.*T./2);
+d = abs(A.*dr./(2.*planner.rScale));
 
 end

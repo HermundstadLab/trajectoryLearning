@@ -141,24 +141,51 @@ while numel(obstacleVec)>0 && obstacleVec(1)>0
 
         end
 
-    % OPTION 2: if next anchor is unreachable, proceed to subsequent anchor
+    % OPTION 2: the next anchor is unreachable, or is not along the faces
+    % of the obstacle along which the trajectory would be diverted
     elseif nextAnchor.nextAnchorID-nextAnchor.prevAnchorID>1 || numel(boundaryInds.exposedFace)==0 
 
         % extract full boundary segment
         boundarySegment = extractBoundarySegment(trajectorySegment.boundaryIntersection,agentView,boundaryAngles,blockID,1);
 
-        % find point along boundary segment that first intersects exposed face
-        [~,indSplit] = min(abs(boundarySegment.yCoords'-exposedFace.yCoords([1,end]))...
-            + abs(boundarySegment.xCoords'-exposedFace.xCoords([1,end])),[],1);
+        % find points along boundary segment that intersect exposed face
+        [~,candSplits] = min(abs(boundarySegment.yCoords'-exposedFace.yCoords)...
+            + abs(boundarySegment.xCoords'-exposedFace.xCoords),[],1);
+        candSplits = sort(candSplits);
+
+        % OPTION 2A: next anchor is unreachable
+        if nextAnchor.nextAnchorID-nextAnchor.prevAnchorID>1
+
+            % find the points along the boundary that are closest to the
+            % unreachable anchor points
+            for i=1:numel(nextAnchor.interAnchors.yCoords)
+                [~,indAnchors(i)] = min(abs(boundarySegment.yCoords'-nextAnchor.interAnchors.yCoords(i))...
+                    + abs(boundarySegment.xCoords'-nextAnchor.interAnchors.yCoords(i)),[],1);
+            end
+
+            % find the first point along the exposed face that is further 
+            % along the boundary than the unreachable anchor points
+            indSplit = find(candSplits>max(indAnchors),1,'first');
+            if numel(indSplit)<1
+                indSplit = min(candSplits);
+            else
+                indSplit = candSplits(indSplit);
+            end
+        
+        % OPTION 2B: next anchor is not along the diverted faces
+        else
+            indSplit = min(candSplits);
+        end
+
         indEnd   = numel(boundarySegment.xCoords);
 
         % split boundary segment at point where agent can see next anchor 
-        [boundarySegment1,boundarySegment2] = splitTrajectory(boundarySegment,boundaryFields,min(indSplit),indEnd);
+        [boundarySegment1,boundarySegment2] = splitTrajectory(boundarySegment,boundaryFields,indSplit,indEnd);
 
         % generate boundary trajectory
         [boundaryTrajectory,boundaryInds] = generateBoundaryTrajectory(boundarySegment1,nextAnchor,boundaryInds,planner);
 
-        % add boundary trajectory to existing trajectory
+       % add boundary trajectory to existing trajectory
         executedTrajectory = expandTrajectory(executedTrajectory,boundaryTrajectory,trajFields);
 
         % generate open field trajectory to next anchor point
@@ -185,6 +212,10 @@ while numel(obstacleVec)>0 && obstacleVec(1)>0
     originalTrajectory = trimTrajectory(originalTrajectory,trajFields,inds);
     obstacleVec(inds) = [];
 
+    obstacleHit = intersectTrajectory(executedTrajectory.xCoords,executedTrajectory.yCoords,...
+            trial.obstacle.xBounds(trial.blockIDs(trialID),:),...
+            trial.obstacle.yBounds(trial.blockIDs(trialID),:),'inside');
+
 end
 
 % append remaining trajectory
@@ -199,7 +230,6 @@ executedTrajectory = updateAnchors(executedTrajectory,originalTrajectory,anchorF
 % store initial heading and boundary flag:
 executedTrajectory.delta        = trajectory.delta;
 executedTrajectory.boundaryFlag = trajectory.boundaryFlag;
-x = 5;
 
 end
 
@@ -249,10 +279,14 @@ nextAnchorID = prevAnchorID+1;
     traj.anchors.rCoords(nextAnchorID));
 
 % if next anchor is within the obstacle, select the subsequent anchor
+interAnchors.xCoords = xAnchor;
+interAnchors.yCoords = yAnchor;
 while intersectTrajectory(xAnchor,yAnchor,agentView.xBounds(blockID,:),agentView.yBounds(blockID,:),intersectionType)
     nextAnchorID = nextAnchorID+1;
     [xAnchor,yAnchor] = pol2cart(traj.anchors.thCoords(nextAnchorID),...
         traj.anchors.rCoords(nextAnchorID));
+    interAnchors.xCoords = [interAnchors.xCoords,xAnchor];
+    interAnchors.yCoords = [interAnchors.yCoords,yAnchor];
 end
 anchor.xCoords  = xAnchor;
 anchor.yCoords  = yAnchor;
@@ -260,6 +294,8 @@ anchor.thCoords = traj.anchors.thCoords(nextAnchorID);
 anchor.rCoords  = traj.anchors.rCoords( nextAnchorID);
 anchor.prevAnchorID = prevAnchorID;
 anchor.nextAnchorID = nextAnchorID;
+anchor.interAnchors.xCoords = interAnchors.xCoords(1:end-1);
+anchor.interAnchors.yCoords = interAnchors.yCoords(1:end-1);
 
 if nextAnchorID>max(traj.prevAnchor)
     index = numel(traj.prevAnchor);
@@ -328,8 +364,8 @@ openFieldAnchors.N = numel(openFieldAnchors.thCoords);
 initialHeading = boundarySegment.heading(1);
 
 [dth, ~] = dpol(openFieldAnchors.thCoords,openFieldAnchors.rCoords);
-delta    = initialHeading-dth+pi/2;
-deltaSet = [delta,pi/2];
+delta    = initialHeading-dth;
+deltaSet = [delta,0];
 
 % if the next anchor point is the final one (i.e., the home port), peel
 % away from the boundary (i.e., choose first of allowed initial headings)
@@ -341,7 +377,7 @@ if nextAnchor.nextAnchorID==max(traj.prevAnchor)+1
 else
     angleVec = [-2*pi,0,2*pi]';
     nextAnchorHeading = traj.heading(trajectoryInds.nextAnchor);
-    finalHeading = pi/2+dth-deltaSet;
+    finalHeading = dth-deltaSet;
     [~,indMin] = min(min(abs(finalHeading-(nextAnchorHeading-angleVec)),[],1));
     delta = deltaSet(indMin);
 end
@@ -360,7 +396,7 @@ boundaryInds.anchors   = sort(unique([1,boundaryInds.corners,boundaryInds.exitPo
 
 [boundaryAnchors.thCoords,boundaryAnchors.rCoords] = cart2pol(boundarySegment.xCoords(boundaryInds.anchors),boundarySegment.yCoords(boundaryInds.anchors));
 boundaryAnchors.N  = numel(boundaryAnchors.thCoords);
-boundaryTrajectory = planTrajectory(boundaryAnchors,pi/2,planner,1);
+boundaryTrajectory = planTrajectory(boundaryAnchors,0,planner,1);
 boundaryTrajectory.prevAnchor = (nextAnchor.prevAnchorID).*ones(1,numel(boundaryTrajectory.xCoords));
 end
 
