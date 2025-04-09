@@ -14,7 +14,7 @@ function multiAgentResults = runMultipleAgents(nAgents,belief,sampler,planner,tr
 nTrials = trial.nTrials;
 parfor i=1:nAgents
     disp(['running agent ',num2str(i)]);
-    singleAgentResults = runLearning(belief,sampler,planner,trial);
+    singleAgentResults = runSingleAgent(belief,sampler,planner,trial);
 
     % store trajectory properties
     rewardRate = [rewardRate, singleAgentResults.trajectory.rewards         ];
@@ -72,5 +72,5 @@ multiAgentResults.belief.cache    = cache;
 multiAgentResults.belief.entropy  = entropy;
 
 % store entropy of flat prior, for plotting
-singleAgentResults = runLearning(belief,sampler,planner,trial);
+singleAgentResults = runSingleAgent(belief,sampler,planner,trial);
 multiAgentResults.belief.entropyFlat = computeEntropy(singleAgentResults.belief.prior);
