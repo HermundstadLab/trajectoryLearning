@@ -78,13 +78,13 @@ trialID = 2;
 plotSingleTrial(agent.simResults,agent.belief,agent.trial,trialID,plotParams);
 
 % to simulate a new agent, run:
-%   simResults = runSingleAgent(arena,belief,sampler,planner,trial);
+%   simResults = runSingleAgent(belief,sampler,planner,trial);
 %   plotSingleTrial(simResults,arena,belief,trial,trialID,plotParams);
 
 
 %% simulate many agents, store results, and plot results averaged across agents
 
-multiAgentResults = runMultipleAgents(50,arena,belief,sampler,planner,trial);
+multiAgentResults = runMultipleAgents(50,belief,sampler,planner,trial);
 
 
 
