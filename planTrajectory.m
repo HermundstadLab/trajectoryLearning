@@ -49,7 +49,7 @@ for i=2:anchors.N
     % for any trajectory besides a boundary trajectory, ensure the initial 
     % offset is the same as final offset from last segment
     if i>2 && ~boundaryFlag
-        delta = wrapToPi(pi-(dth-dth0)-delta0);
+        delta = wrapToPi(-(dth-dth0)-delta0);
     end
 
     % generate trajectory linking anchors; choose multiple of initial  
@@ -58,7 +58,7 @@ for i=2:anchors.N
     dist   = nan(size(deltaSet));
     [xtmp,ytmp,vtmp,htmp] = deal(nan(size(deltaSet,2),numel(tt)));
     for j=1:3
-        [xtraj,ytraj,vtmp(j,:),htmp(j,:),dist(j)] = generateTrajectorySegment(tt,dth,dr,deltaSet(j),T);
+        [xtraj,ytraj,vtmp(j,:),htmp(j,:),dist(j)] = generateTrajectorySegment(tt,dth,dr,deltaSet(j),planner);
         xtmp(j,:) = x0+xtraj;
         ytmp(j,:) = y0+ytraj;
     end
