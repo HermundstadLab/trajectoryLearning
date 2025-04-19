@@ -142,16 +142,22 @@ belief.sigmaL         = agentParams.likelihoodSigma*belief.np;      % SD of gaus
 belief.npExclude      = agentParams.anchorTolMerge.*belief.np;      % radial distance to exclude around home port (n.u.)
 belief.rMinAnchors    = belief.rMin + ...                           % define minimum radius for anchors selected beyond home port
     agentParams.anchorTolMerge*(belief.rMax-belief.rMin);
-belief.cacheThreshold = agentParams.cacheThreshold;                 % surprise threshold for caching posterior;
-belief.cacheWindow    = agentParams.cacheWindow;                    % number of successive timepoints that cache signal must exceed threshold
-belief.mask           = createPosteriorMask(belief);                % create posterior mask based on arena bounds
-belief.cache          = agentParams.cacheFlag;                      % determines whether to cache posterior
-belief.boundaryTol    = 1./belief.np;                               % tolerance for determining boundary anchors
+
+belief.surpriseThreshold   = agentParams.surpriseThreshold;         % surprise threshold for resetting posterior;
+belief.resetWindow         = agentParams.resetWindow;               % number of successive timepoints that surprise signal must exceed threshold
+belief.resetFlag           = agentParams.resetFlag;                 % determines whether to reset posterior
+
+belief.cacheSamplingMethod = agentParams.cacheSamplingMethod;       % determines method to use for sampling from cache
+belief.cacheSize           = agentParams.cacheSize;                 % determines maximum number of entries in cache
+belief.cacheFlag           = agentParams.cacheFlag;                 % determines whether to cache belief
+
+belief.mask                = createPosteriorMask(belief);           % create posterior mask based on arena bounds
+belief.boundaryTol         = 1./belief.np;                          % tolerance for determining boundary anchors
 
 
 %---------------------- build sampler structure --------------------------%
 
-sampler.minPeakDist    = agentParams.anchorTolMerge.*belief.np;     % min distance between peaks in posterior (n.u.)
+sampler.minPeakDist    = round(agentParams.anchorTolMerge.*belief.np);     % min distance between peaks in posterior (n.u.)
 sampler.minPeakHeight  = 1./(belief.np.^2);                         % min height of peaks in posterior (n.u.)
 sampler.nAnchorsInit   = agentParams.anchorInit;                    % maximum number of anchors
 sampler.errorThreshold = agentParams.errorThreshold;                % error threshold for augmenting anchors points

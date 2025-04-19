@@ -20,8 +20,8 @@ if nargin<5
 end
 
 % determine peaks in the map; these will be used to sample anchors              
-mapTmp = map;                               % define temporary variable for sampling
-mapTmp(isnan(mapTmp)) = 0;                  % remove nans for sampling (allow borders to be peaks)
+mapTmp = map;                                 % define temporary variable for sampling
+mapTmp(isnan(mapTmp)) = 0;                    % remove nans for sampling (allow borders to be peaks)
 [pks,locs_r,locs_th] = peaks2(mapTmp,...      % determine peaks
     'MinPeakDistance',sampler.minPeakDist,...
     'MinPeakHeight',sampler.minPeakHeight);     

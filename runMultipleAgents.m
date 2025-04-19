@@ -7,7 +7,7 @@ function multiAgentResults = runMultipleAgents(nAgents,belief,sampler,planner,tr
 
 % initialize arrays
 [rewardRate,nAnchors,obstHits,boundary,...
-    pReward,surprise,cache,entropy,...
+    pReward,surprise,reset,entropy,...
     initAnchorLocs,finalAnchorLocs,...
     distance]                            = deal([]);
 
@@ -17,26 +17,26 @@ parfor i=1:nAgents
     singleAgentResults = runSingleAgent(belief,sampler,planner,trial);
 
     % store trajectory properties
-    rewardRate = [rewardRate, singleAgentResults.trajectory.rewards         ];
-    nAnchors   = [nAnchors,   singleAgentResults.trajectory.nAnchorsPlanned ];
-    obstHits   = [obstHits,   singleAgentResults.trajectory.obstacleHits    ];
-    boundary   = [boundary,   singleAgentResults.trajectory.boundaryFlag    ];
-    distance   = [distance,   singleAgentResults.trajectory.distanceExecuted];
+    rewardRate = [rewardRate, singleAgentResults.trajectory.rewards          ];
+    nAnchors   = [nAnchors,   singleAgentResults.trajectory.planned.nAnchors ];
+    obstHits   = [obstHits,   singleAgentResults.trajectory.obstacleHits     ];
+    boundary   = [boundary,   singleAgentResults.trajectory.boundaryFlag     ];
+    distance   = [distance,   singleAgentResults.trajectory.executed.distance];
 
     % store belief properties
     pReward    = [pReward,    singleAgentResults.belief.probReward          ];
     surprise   = [surprise,   singleAgentResults.belief.cacheSignal         ];
-    cache      = [cache,      singleAgentResults.belief.cache               ];
+    reset      = [reset,      singleAgentResults.belief.reset               ];
     entropy    = [entropy,    singleAgentResults.belief.entropy             ];
 
     % extract and store anchor properties
-    [xx0,yy0] = pol2cart(singleAgentResults.trajectory.executed{   1   }.anchors.thCoords,singleAgentResults.trajectory.executed{   1   }.anchors.rCoords);
-    [xxF,yyF] = pol2cart(singleAgentResults.trajectory.executed{nTrials}.anchors.thCoords,singleAgentResults.trajectory.executed{nTrials}.anchors.rCoords);
-    n0 = singleAgentResults.trajectory.executed{   1   }.anchors.N;
-    nF = singleAgentResults.trajectory.executed{nTrials}.anchors.N;
+    [xx0,yy0] = pol2cart(singleAgentResults.trajectory.executed.path{   1   }.anchors.thCoords,singleAgentResults.trajectory.executed.path{   1   }.anchors.rCoords);
+    [xxF,yyF] = pol2cart(singleAgentResults.trajectory.executed.path{nTrials}.anchors.thCoords,singleAgentResults.trajectory.executed.path{nTrials}.anchors.rCoords);
+    n0 = singleAgentResults.trajectory.executed.path{   1   }.anchors.N;
+    nF = singleAgentResults.trajectory.executed.path{nTrials}.anchors.N;
 
     initAnchorLocs = [initAnchorLocs,    [xx0(2:end-1);yy0(2:end-1);repmat(n0-2,[1,n0-2]);repmat(i,[1,n0-2]) ] ];
-    if ~singleAgentResults.trajectory.executed{100}.boundaryFlag
+    if ~singleAgentResults.trajectory.executed.path{100}.boundaryFlag
         finalAnchorLocs = [finalAnchorLocs,    [xxF(2:end-1);yyF(2:end-1);repmat(nF-2,[1,nF-2]);repmat(i,[1,nF-2]);...
             repmat(mean(singleAgentResults.trajectory.rewards(ceil(nTrials/2)+1:nTrials)),[1,nF-2])] ];
     end
@@ -68,7 +68,7 @@ multiAgentResults.trajectory.finalAnchors.avgReward    = finalAnchorLocs(5,:);
 % store belief properties
 multiAgentResults.belief.pReward  = pReward;
 multiAgentResults.belief.surprise = surprise;
-multiAgentResults.belief.cache    = cache;
+multiAgentResults.belief.reset    = reset;
 multiAgentResults.belief.entropy  = entropy;
 
 % store entropy of flat prior, for plotting
