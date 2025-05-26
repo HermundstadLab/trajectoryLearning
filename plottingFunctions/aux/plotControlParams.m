@@ -18,7 +18,7 @@ end
 % if input trajectory is a planned (rather than executed) trajectory,
 % recompute full trajectory from initial heading and anchor points
 if strcmp(trajType,'planned')
-    trajectory = planTrajectory(trajectory.anchors,trajectory.phi,planner);
+    trajectory = planTrajectory(trajectory.anchors,trajectory.delta,planner);
 end
 
 if strcmp(paramType,'velocity')
@@ -37,7 +37,7 @@ elseif strcmp(paramType,'heading')
     timepts = (0:numel(trajectory.heading)-1)./planner.nInterp;
     
     % wrap heading to [-pi,pi] for plotting
-    heading = wrapToPi(trajectory.heading);
+    heading = wrapToPi(pi-trajectory.heading);
 
     % find discontinuities in heading
     jumps = find(abs(diff(heading))>pi); 

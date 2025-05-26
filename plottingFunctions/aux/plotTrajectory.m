@@ -23,7 +23,7 @@ end
 % if input trajectory is a planned (rather than executed) trajectory,
 % recompute full trajectory from initial heading and anchor points
 if strcmp(trajType,'planned')
-    trajectory = planTrajectory(trajectory.anchors,trajectory.phi,planner);
+    trajectory = planTrajectory(trajectory.anchors,trajectory.delta,planner);
 end
 
 blockID = trial.blockIDs(trialID);
