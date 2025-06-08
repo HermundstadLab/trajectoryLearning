@@ -1,14 +1,18 @@
-function [contextIDs,contextPosterior,posterior,cache,resetFlag,cacheFlag] = updateBelief(contextIDs,contextPrior,prior,likelihood,outcome,surprise,cache,belief)
+function [posterior,contextPosterior,contextIDs,cache,resetFlag,cacheFlag] = updateBelief(prior,likelihood,outcome,contextPrior,contextIDs,cache,surprise,belief)
 % UPDATEBELIEF Updates Bayesian belief.
-%   [posterior,resetFlag,entropy] = UPDATEBELIEF(contextPrior,prior,likelihood,outcome,surprise,cache,belief) 
-%   uses the prior belief, together with the likelihood conditioned on the 
-%   observed outcome, to update the posterior belief. If an input cache 
-%   signal exceeds a threshold (specified in the 'belief' structure), the
-%   belief is reset to a uniform prior. The function returns a binary flag
-%   ('reset) about whether a cache occured, and returns the entropy of the
-%   resulting posterior distribution.
+%   [posterior,contextPosterior,contextIDs,cache,resetFlag,cacheFlag] = 
+%       UPDATEBELIEF(prior,likelihood,outcome,contextPrior,contextIDs,cache,surprise,belief) 
+%   uses the prior belief about the target vector, together with the 
+%   likelihood conditioned on the observed outcome, to update the posterior 
+%   belief about the target vector. If an input surprise signal exceeds a 
+%   threshold (specified in the 'belief' structure), the current state of
+%   the posterior is stored in a cache as a new context, and the context
+%   prior is updated to include the new context entry (with corresponding 
+%   context IDs. The posterior is then reset to a uniform prior. The 
+%   function returns two binary flag ('resetFlag' and 'cacheFlag') about
+%   whether the posterior was reset and a cache occured.
 %
-%   See also: GETLIKELIHOOD
+%   See also: GETTARGETLIKELIHOOD
 
 
 % determine whether to reset belief
@@ -20,8 +24,7 @@ if belief.resetFlag && numel(surprise)>belief.resetWindow-1 && all(surprise(end-
         cache = cat(3,prior,cache);
 
         % update context IDs
-        contextIDs = [[contextIDs(1,1),max(contextIDs(1,:))+1,contextIDs(1,2:end)];...
-            [contextIDs(2,:),max(contextIDs(2,:))+1]];
+        contextIDs = [contextIDs(1,1),max(contextIDs(1,:))+1,contextIDs(1,2:end)];
 
         % update belief about context
         pOld = 1./(1+numel(contextPrior));
@@ -35,7 +38,7 @@ if belief.resetFlag && numel(surprise)>belief.resetWindow-1 && all(surprise(end-
     
     % reset to uniform prior
     posterior = normalizeBelief(belief.mask.*ones(belief.np,belief.np));
-    resetFlag     = 1;
+    resetFlag = 1;
 
 else
     % else use prior and likelihood to update belief within current context
@@ -44,10 +47,12 @@ else
     cacheFlag = 0;
 
     % update belief about context
-    for i=1:size(cache,3)
-        probOutcome(i) = computeOutcomeProb(squeeze(cache(:,:,i)),likelihood,outcome);
+    if ~isempty(cache)
+        for i=1:size(cache,3)
+            probOutcome(i) = computeOutcomeProb(squeeze(cache(:,:,i)),likelihood,outcome);
+        end
+        contextPosterior = normalizeBelief(contextPrior.*probOutcome + .01*ones(size(contextPrior)));
     end
-    contextPosterior = normalizeBelief(contextPrior.*probOutcome + .01*ones(size(contextPrior)));
 end
 
 
