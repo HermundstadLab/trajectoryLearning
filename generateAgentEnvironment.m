@@ -143,6 +143,7 @@ belief.npExclude      = agentParams.anchorTolMerge.*belief.np;      % radial dis
 belief.rMinAnchors    = belief.rMin + ...                           % define minimum radius for anchors selected beyond home port
     agentParams.anchorTolMerge*(belief.rMax-belief.rMin);
 
+belief.memoryDecay         = agentParams.memoryDecay;               % amount of memory decay for posterior belief
 belief.surpriseThreshold   = agentParams.surpriseThreshold;         % surprise threshold for resetting posterior;
 belief.resetWindow         = agentParams.resetWindow;               % number of successive timepoints that surprise signal must exceed threshold
 belief.resetFlag           = agentParams.resetFlag;                 % determines whether to reset posterior
@@ -153,15 +154,19 @@ belief.cacheFlag           = agentParams.cacheFlag;                 % determines
 
 belief.mask                = createPosteriorMask(belief);           % create posterior mask based on arena bounds
 belief.boundaryTol         = 1./belief.np;                          % tolerance for determining boundary anchors
-
+belief.uniformTargetPrior  = normalizeBelief(...                    % uniform belief distribution
+    belief.mask.*ones(belief.np,belief.np));
+belief.baseEntropy         = computeEntropy(...                     % entropy of uniform belief distribution (used for scaling)
+    belief.uniformTargetPrior);    
 
 %---------------------- build sampler structure --------------------------%
 
-sampler.minPeakDist    = round(agentParams.anchorTolMerge.*belief.np);     % min distance between peaks in posterior (n.u.)
-sampler.minPeakHeight  = 1./(belief.np.^2);                         % min height of peaks in posterior (n.u.)
-sampler.nAnchorsInit   = agentParams.anchorInit;                    % maximum number of anchors
-sampler.errorThreshold = agentParams.errorThreshold;                % error threshold for augmenting anchors points
-
+sampler.minPeakDist           = round(agentParams.anchorTolMerge.*belief.np);  % min distance between peaks in posterior (n.u.)
+sampler.minPeakHeight         = 1./(belief.np.^2);                             % min height of peaks in posterior (n.u.)
+sampler.nAnchorsInit          = agentParams.anchorInit;                        % maximum number of anchors
+sampler.errorThreshold        = agentParams.errorThreshold;                    % error threshold for augmenting anchors points
+sampler.samplingNoise         = agentParams.anchorSamplingNoise;               % execution noise about sampled anchor 
+sampler.uniformPriorThreshold = agentParams.uniformPriorThreshold;             % threshold for flagging uniform prior
 
 %--------------------- build planner structure ---------------------------%
 
