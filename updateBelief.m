@@ -1,4 +1,4 @@
-function [posterior,contextPosterior,contextIDs,cache,resetFlag,cacheFlag] = updateBelief(prior,likelihood,outcome,contextPrior,contextIDs,cache,surprise,belief)
+function [targetPosterior,contextPosterior,contextToWrite,cache,resetFlag,cacheFlag] = updateBelief(targetPrior,targetLikelihood,outcome,contextPrior,contextToWrite,cache,surprise,belief)
 % UPDATEBELIEF Updates Bayesian belief.
 %   [posterior,contextPosterior,contextIDs,cache,resetFlag,cacheFlag] = 
 %       UPDATEBELIEF(prior,likelihood,outcome,contextPrior,contextIDs,cache,surprise,belief) 
@@ -17,42 +17,62 @@ function [posterior,contextPosterior,contextIDs,cache,resetFlag,cacheFlag] = upd
 
 % determine whether to reset belief
 if belief.resetFlag && numel(surprise)>belief.resetWindow-1 && all(surprise(end-belief.resetWindow+1:end)>belief.surpriseThreshold)
-
-    % determine whether to cache
-    if belief.cacheFlag && size(cache,3)<=belief.cacheSize
-        % append current belief to cache 
-        cache = cat(3,prior,cache);
-
-        % update context IDs
-        contextIDs = [contextIDs(1,1),max(contextIDs(1,:))+1,contextIDs(1,2:end)];
-
-        % update belief about context
-        pOld = 1./(1+numel(contextPrior));
-        pOld = pOld+.25;
-        contextPosterior = [(1-pOld),pOld*contextPrior];
-
-        cacheFlag = 1;
-    else
-        cacheFlag = 0;
-    end
-    
-    % reset to uniform prior
-    posterior = normalizeBelief(belief.mask.*ones(belief.np,belief.np));
+    % signal reset
     resetFlag = 1;
 
+    % determine whether to cache
+    if belief.cacheFlag
+        % signal cache
+        cacheFlag = 1;
+
+        % stop writing to current cache entry, choose cache that is closest
+        % to uniform to write
+        for i=1:belief.cacheSize
+            DKL(i) = computeKLdiv(cache(:,:,i),belief.uniformTargetPrior);
+        end
+        [~,contextToWrite] = min(DKL);
+        contextsToUpdate   = find(contextPrior>0);
+
+        % get new target posterior belief
+        targetPosterior  = cache(:,:,contextToWrite);
+        
+        % update belief about context
+        contextPosterior = zeros(size(contextPrior));
+        contextPosterior( contextToWrite ) = 0.5;
+        contextPosterior(contextsToUpdate) = 0.5*contextPrior(contextsToUpdate)./sum(contextPrior(contextsToUpdate));
+
+    else
+        % signal no cache
+        cacheFlag = 0;
+
+        % reset to uniform prior
+        targetPosterior = normalizeBelief(belief.mask.*ones(belief.np,belief.np));
+
+        % update cache
+        cache(:,:,contextToWrite) = targetPosterior;
+    end   
+
 else
-    % else use prior and likelihood to update belief within current context
-    posterior = normalizeBelief(prior.*likelihood(:,:,outcome)); 
+    % signal no reset
     resetFlag = 0;
+
+    % signal no cache
     cacheFlag = 0;
 
+    % use prior and likelihood to update belief within current context
+    targetPosterior = normalizeBelief(targetPrior.*targetLikelihood(:,:,outcome)); 
+    
+    % update cache
+    cache(:,:,contextToWrite) = targetPosterior;
+
     % update belief about context
-    if ~isempty(cache)
-        for i=1:size(cache,3)
-            probOutcome(i) = computeOutcomeProb(squeeze(cache(:,:,i)),likelihood,outcome);
-        end
-        contextPosterior = normalizeBelief(contextPrior.*probOutcome + .01*ones(size(contextPrior)));
+    probOutcome = zeros(size(contextPrior));
+    contextsToUpdate = find(contextPrior>0);
+    for i=contextsToUpdate
+        probOutcome(i) = computeOutcomeProb(squeeze(cache(:,:,i)),targetLikelihood,outcome);
     end
+    contextPosterior = normalizeBelief(contextPrior.*probOutcome);
+
 end
 
 

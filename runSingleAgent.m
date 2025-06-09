@@ -7,16 +7,6 @@ function simResults = runSingleAgent(belief,sampler,planner,trial)
 %   the trial protocol (in 'trial'), and returns a structure that contains
 %   the output of a simulated agent. 
 
-
-%------------------- initialize priors, errormap, cache ------------------%
-uniformTargetPrior = belief.uniformTargetPrior;
-targetPosterior    = uniformTargetPrior;
-targetErrormap     = belief.mask.*zeros(belief.np,belief.np);
-cache              = nan(belief.np,belief.np,1);
-cache(:,:,1)       = targetPosterior;
-contextPosterior   = 1;
-contextIDs         = 0;                      % key: 0 (current), N (newest), N-1, ... 1 (oldest)
-
 %--------------------- initialize storage variables ----------------------%
 [executedTargetLikelihoods,plannedTargetLikelihoods,...
     targetPosteriors,targetErrormaps                    ] = deal(nan(belief.np,belief.np,trial.nTrials));   
@@ -28,22 +18,44 @@ contextIDs         = 0;                      % key: 0 (current), N (newest), N-1
     initAngle_planned,initAngle_executed,...
     targetPosteriorEntropy,contextPosteriorEntropy,...
     obstacleHit,resetFlag,cacheFlag,boundaryFlag,...
-    sampledContext                                      ] = deal(nan(trial.nTrials,1));
+    contextToRead,contextToWrite                        ] = deal(nan(trial.nTrials,1));
+allCaches = nan(belief.cacheSize,belief.np,belief.np,trial.nTrials);
 
+%------------------- initialize priors, errormap, cache ------------------%
+uniformTargetPrior = belief.uniformTargetPrior;
+targetErrormap     = belief.mask.*zeros(belief.np,belief.np);
+
+cache = [];
+for i=1:belief.cacheSize
+    cache = cat(3,cache,uniformTargetPrior);
+end
+
+contextToWrite(1) = 1;
+contextPosterior  = zeros(1,belief.cacheSize);
+contextPosterior(contextToWrite(1)) = 1;
 
 %------------------------- run learning algorithm ------------------------%
 for trialID=1:trial.nTrials
 
+    % apply memory decay to posterior beliefs and existing caches
+    uniformContextPrior = zeros(size(contextPosterior));
+    uniformContextPrior(contextPosterior>0) = 1;
+    uniformContextPrior = normalizeBelief(uniformContextPrior);
+
+    contextPosterior = applyMemoryDecay(contextPosterior,uniformContextPrior,belief);
+    for j=1:belief.cacheSize
+        cache(:,:,j) = applyMemoryDecay(cache(:,:,j),uniformTargetPrior,belief);
+    end
+
     % update prior beliefs
     contextPrior = contextPosterior;
-    targetPrior  = targetPosterior;
-    cache(:,:,1) = targetPrior;
+    targetPriorToWrite = cache(:,:,contextToWrite(trialID));
 
     % select prior belief that will be used to sample anchor points
-    [targetPriorToSample,sampledContext(trialID)] = sampleContext(contextPrior,contextIDs,cache,belief);
+    [targetPriorToRead,contextToRead(trialID)] = sampleContext(contextPrior,cache,belief);
 
     % sample anchor points from prior
-    anchors = sampleAnchors(targetPriorToSample,belief,sampler,planner);
+    anchors = sampleAnchors(targetPriorToRead,belief,sampler,planner);
 
     % plan optimal trajectory through the set of anchors
     plannedTrajectory = optimizeTrajectory(anchors,belief,planner);
@@ -64,8 +76,8 @@ for trialID=1:trial.nTrials
     [outcome(trialID),reward(trialID)] = getOutcome(executedTrajectory,trial,trialID);
 
     % compute the probability of the different outcomes under the prior
-    outcomeProb(trialID) = computeOutcomeProb(targetPrior,executedTargetLikelihood,outcome(trialID));
-    rewardProb( trialID) = computeOutcomeProb(targetPrior,executedTargetLikelihood,       1        );
+    outcomeProb(trialID) = computeOutcomeProb(targetPriorToWrite,executedTargetLikelihood,outcome(trialID));
+    rewardProb( trialID) = computeOutcomeProb(targetPriorToWrite,executedTargetLikelihood,       1        );
 
     % use the outcome surprise under the current prior, relative to a uniform prior,
     % to determine whether to reset posterior
@@ -76,26 +88,23 @@ for trialID=1:trial.nTrials
     targetErrormap = updateErrormap(plannedTargetLikelihood,executedTargetLikelihood,targetErrormap);
 
     % update belief based on executed trajectory and outcome
-    [targetPosterior,contextPosterior,contextIDs,cache,resetFlag(trialID),cacheFlag(trialID)]...
-        = updateBelief(targetPrior,executedTargetLikelihood,outcome(trialID),contextPrior,contextIDs,cache,outcomeSurprise,belief);
+    [targetPosteriorToWrite,contextPosterior,contextToWrite(trialID+1),cache,resetFlag(trialID),cacheFlag(trialID)]...
+        = updateBelief(targetPriorToWrite,executedTargetLikelihood,outcome(trialID),contextPrior,contextToWrite(trialID),cache,outcomeSurprise,belief);
 
     % compute entropies of updated belief
-    targetPosteriorEntropy( trialID) = computeEntropy(targetPosterior);
+    targetPosteriorEntropy( trialID) = computeEntropy(targetPosteriorToWrite);
     contextPosteriorEntropy(trialID) = computeEntropy(contextPosterior);
-
-    % apply memory decay to posterior beliefs and existing caches
-    targetPosterior  = applyMemoryDecay(targetPosterior, uniformTargetPrior,belief);
-    contextPosterior = applyMemoryDecay(contextPosterior,normalizeBelief(ones(size(contextPosterior))),belief);
-    for j=2:size(cache,3)
-        cache(:,:,j) = applyMemoryDecay(cache(:,:,j),uniformTargetPrior,belief);
-    end
 
     %-------------------------- append results ---------------------------%
     executedTargetLikelihoods(:,:,trialID) = executedTargetLikelihood(:,:,outcome(trialID));
     plannedTargetLikelihoods( :,:,trialID) = plannedTargetLikelihood( :,:,outcome(trialID));
-    targetPosteriors(         :,:,trialID) = targetPosterior;
+    targetPosteriors(         :,:,trialID) = targetPosteriorToWrite;
     targetErrormaps(          :,:,trialID) = targetErrormap;
     contextPosteriors(1:numel(contextPosterior),trialID) = contextPosterior';
+
+    for i=1:belief.cacheSize
+        allCaches(i,:,:,trialID) = cache(:,:,i);
+    end
     
     % for planned trajectory, only store anchor points and initial heading 
     % (sufficient to recover full planned trajectory)
@@ -116,10 +125,6 @@ for trialID=1:trial.nTrials
     initAngle_planned( trialID,1) = plannedTrajectory.anchors.thCoords(2);
 
 end
-
-%--------------------------- reformat beliefs ----------------------------%
-[contextPosteriors,estimatedContext,sampledContext,cache] ...
-    = reformatContextBelief(contextPosteriors,sampledContext,cache,contextIDs,cacheFlag);
 
 %----------------------------- store results -----------------------------%
 
@@ -148,10 +153,10 @@ simResults.belief.target.posteriorEntropy       = targetPosteriorEntropy;
 simResults.belief.target.resetFlag              = resetFlag;
 simResults.belief.target.cacheFlag              = cacheFlag;
 
-simResults.belief.context.cache                 = cache;
+simResults.belief.context.allCaches             = allCaches;
 simResults.belief.context.posteriors            = contextPosteriors;
-simResults.belief.context.sampled               = sampledContext;
-simResults.belief.context.estimated             = estimatedContext;
+simResults.belief.context.toRead                = contextToRead;
+simResults.belief.context.toWrite               = contextToWrite;
 simResults.belief.context.posteriorEntropy      = contextPosteriorEntropy;
 
 end
