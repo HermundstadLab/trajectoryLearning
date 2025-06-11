@@ -12,7 +12,7 @@ function simResults = runSingleAgent(belief,sampler,planner,trial)
     targetPosteriors,targetErrormaps                    ] = deal(nan(belief.np,belief.np,trial.nTrials));   
 [traj_executed,traj_planned                             ] = deal(cell(1,trial.nTrials));
 [contextPosteriors                                      ] = deal(nan(belief.cacheSize,trial.nTrials));
-[outcome,reward,outcomeProb,rewardProb,...
+[outcome,reward,latency,outcomeProb,rewardProb,...
     nAnchors_executed,nAnchors_planned,...
     distance_executed,distance_planned,...
     initAngle_planned,initAngle_executed,...
@@ -73,7 +73,7 @@ for trialID=1:trial.nTrials
     executedTargetLikelihood = getTargetLikelihood(executedTrajectory,belief);
 
     % determine whether trajectory intercepted the target and get reward
-    [outcome(trialID),reward(trialID)] = getOutcome(executedTrajectory,trial,trialID);
+    [outcome(trialID),reward(trialID),latency(trialID)] = getOutcome(executedTrajectory,trial,trialID);
 
     % compute the probability of the different outcomes under the prior
     outcomeProb(trialID) = computeOutcomeProb(targetPriorToWrite,executedTargetLikelihood,outcome(trialID));
@@ -132,6 +132,7 @@ simResults.trajectory.executed.path             = traj_executed;
 simResults.trajectory.executed.nAnchors         = nAnchors_executed;
 simResults.trajectory.executed.distance         = distance_executed;
 simResults.trajectory.executed.initAngle        = initAngle_executed;
+simResults.trajectory.executed.latency          = latency.*planner.dt;
 
 simResults.trajectory.planned.path              = traj_planned;
 simResults.trajectory.planned.nAnchors          = nAnchors_planned;

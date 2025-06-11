@@ -9,17 +9,17 @@ function multiAgentResults = runMultipleAgents(nAgents,belief,sampler,planner,tr
 [rewardRate,nAnchors,obstHits,boundary,...
     rewardProb,outcomeSurprise,resetFlag,cacheFlag,...
     targetPosteriorEntropy,contextPosteriorEntropy,...
-    initAnchorLocs,finalAnchorLocs,distance,...
+    initAnchorLocs,finalAnchorLocs,distance,latency,...
     contextPosterior,sampledContext,estimatedContext  ] = deal([]);
 
 nTrials = trial.nTrials;
 nBlocks = numel(unique(trial.blockIDs));
 
 parfor i=1:nAgents
-    disp(['running agent ',num2str(i)]);
+    %disp(['running agent ',num2str(i)]);
     singleAgentResults = runSingleAgent(belief,sampler,planner,trial);
 
-    contextPosteriorTemp = nan(nTrials,nBlocks);
+    contextPosteriorTemp = nan(belief.cacheSize,nTrials);
     np = size(singleAgentResults.belief.context.posteriors,2);
     contextPosteriorTemp(:,1:np) = singleAgentResults.belief.context.posteriors;
 
@@ -29,6 +29,7 @@ parfor i=1:nAgents
     obstHits   = [obstHits,   singleAgentResults.trajectory.obstacleHits     ];
     boundary   = [boundary,   singleAgentResults.trajectory.boundaryFlag     ];
     distance   = [distance,   singleAgentResults.trajectory.executed.distance];
+    latency    = [latency,    singleAgentResults.trajectory.executed.latency ];
 
     % store belief properties
     rewardProb      = [rewardProb,      singleAgentResults.belief.target.rewardProb      ];
@@ -40,8 +41,8 @@ parfor i=1:nAgents
     contextPosteriorEntropy = [contextPosteriorEntropy,singleAgentResults.belief.context.posteriorEntropy];
 
     contextPosterior = [contextPosterior, contextPosteriorTemp                        ];
-    estimatedContext = [estimatedContext, singleAgentResults.belief.context.estimated ];
-    sampledContext   = [sampledContext,   singleAgentResults.belief.context.sampled   ];
+    estimatedContext = [estimatedContext, singleAgentResults.belief.context.toWrite   ];
+    sampledContext   = [sampledContext,   singleAgentResults.belief.context.toRead    ];
 
     % extract and store anchor properties
     [xx0,yy0] = pol2cart(singleAgentResults.trajectory.executed.path{   1   }.anchors.thCoords,singleAgentResults.trajectory.executed.path{   1   }.anchors.rCoords);
@@ -50,7 +51,7 @@ parfor i=1:nAgents
     nF = singleAgentResults.trajectory.executed.path{nTrials}.anchors.N;
 
     initAnchorLocs = [initAnchorLocs,    [xx0(2:end-1);yy0(2:end-1);repmat(n0-2,[1,n0-2]);repmat(i,[1,n0-2]) ] ];
-    if ~singleAgentResults.trajectory.executed.path{100}.boundaryFlag
+    if ~singleAgentResults.trajectory.executed.path{nTrials}.boundaryFlag
         finalAnchorLocs = [finalAnchorLocs,    [xxF(2:end-1);yyF(2:end-1);repmat(nF-2,[1,nF-2]);repmat(i,[1,nF-2]);...
             repmat(mean(singleAgentResults.trajectory.rewards(ceil(nTrials/2)+1:nTrials)),[1,nF-2])] ];
     end
@@ -64,6 +65,7 @@ multiAgentResults.trialProtocol = trial;
 multiAgentResults.trajectory.rewardRate   = rewardRate;
 multiAgentResults.trajectory.nAnchors     = nAnchors;
 multiAgentResults.trajectory.distance     = distance;
+multiAgentResults.trajectory.latency      = latency;
 multiAgentResults.trajectory.obstacleHits = obstHits;
 multiAgentResults.trajectory.boundaryRuns = boundary;
 
@@ -86,7 +88,7 @@ multiAgentResults.belief.target.resetFlag         = resetFlag;
 multiAgentResults.belief.target.cacheFlag         = cacheFlag;
 multiAgentResults.belief.target.posteriorEntropy  = targetPosteriorEntropy;
 
-multiAgentResults.belief.context.posteriors       = reshape(contextPosterior,[nTrials,nBlocks,nAgents]);
+multiAgentResults.belief.context.posteriors       = reshape(contextPosterior,[nTrials,belief.cacheSize,nAgents]);
 multiAgentResults.belief.context.estimated        = estimatedContext;
 multiAgentResults.belief.context.sampled          = sampledContext;
 multiAgentResults.belief.context.posteriorEntropy = contextPosteriorEntropy;
