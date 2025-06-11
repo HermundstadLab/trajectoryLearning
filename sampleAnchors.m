@@ -36,10 +36,10 @@ peaks.rCoords  = belief.rAxes( locs_r(indsort));
 peaks.values   = pkssort./sum(pkssort);
 
 DKL = computeKLdiv(map,belief.uniformTargetPrior);
-if DKL/belief.baseEntropy < sampler.uniformPriorThreshold
+if DKL/belief.baseEntropy <= sampler.uniformPriorThreshold || numel(peaks.values)<1
 
-    % if the current posterior is sufficiently close to uniform, randomly
-    % sample the maximum number of anchors
+    % if the current posterior is sufficiently close to uniform or if there 
+    % are no detectable peaks, randomly sample the maximum number of anchors
     nk = sampler.nAnchorsInit;
 
     % remove nans before sampling
@@ -58,7 +58,7 @@ else
     
     % if there are peaks in the map, choose the smallest number of peaks
     % that cover half of the total peak probability mass
-    nk = find(cumsum(peaks.values)>=frac,1,'first');
+    nk = find(cumsum(peaks.values)>=frac-eps,1,'first');
 
     % select top peaks to be anchor points
     indsel = indsort(1:nk);                                           
