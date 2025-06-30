@@ -1,4 +1,4 @@
-function [outcome,reward] = getOutcome(trajectory,trial,indTrial)
+function [outcome,reward,latency] = getOutcome(trajectory,trial,indTrial)
 % GETOUTCOME Compute the outcome of the executed trajectory. 
 %   [outcome,reward] = GETOUTCOME(trajectory,trial,indTrial) determines 
 %   whether the executed trajectory intercepted the current target on a 
@@ -9,13 +9,16 @@ function [outcome,reward] = getOutcome(trajectory,trial,indTrial)
 %         outcome = 2: trajectory did not intercept target (reward = 0)
 
 blockID = trial.blockIDs(indTrial);
-if any(trajectory.xCoords>trial.target.xCenters(blockID)-trial.target.width/2 ...
+latency = find(trajectory.xCoords>trial.target.xCenters(blockID)-trial.target.width/2 ...
         & trajectory.xCoords<trial.target.xCenters(blockID)+trial.target.width/2 ...
         & trajectory.yCoords>trial.target.yCenters(blockID)-trial.target.height/2 ...
-        & trajectory.yCoords<trial.target.yCenters(blockID)+trial.target.height/2)
+        & trajectory.yCoords<trial.target.yCenters(blockID)+trial.target.height/2,1,'first');
+
+if numel(latency)>0
     outcome = 1;
 else
     outcome = 2;
+    latency = nan;
 end
 
 reward = -outcome+2;
