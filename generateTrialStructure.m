@@ -31,10 +31,10 @@ elseif strcmp(trialParams.targetArrangement,'random')
     xcTarget = randu(arena.xMin,arena.xMax,trialParams.nTargets);       % x coords of target centers
     ycTarget = randu(arena.yMin,arena.yMax,trialParams.nTargets);       % y coords of target centers
 
-elseif strcmp(trialParams.obstacleArrangement,'centered')
+elseif strcmp(trialParams.targetArrangement,'centered')
     % define N targets centered above home port
-    xcTarget = zeros(1,trialParams.nObstacles);                         % x coords of target centers
-    ycTarget = arena.size(2)/2.*ones(1,trialParams.nObstacles);         % y coords of target centers
+    xcTarget = zeros(1,trialParams.nTargets);                           % x coords of target centers
+    ycTarget = arena.size(2)/2.*ones(1,trialParams.nTargets);           % y coords of target centers
 
 else
     error('unrecoginized target arrangement');
@@ -48,13 +48,19 @@ if strcmp(trialParams.obstacleArrangement,'none')
 
 elseif strcmp(trialParams.obstacleArrangement,'centered')
     % define obstacles centered above home port
-    xcObstacle = zeros(1, trialParams.nObstacles);                      % x coords of obstacle centers
-    ycObstacle = 2.5.*ones(1, trialParams.nObstacles);                  % y coords of obstacle centers
+    xcObstacle = zeros(1, trialParams.nBlocks);                         % x coords of obstacle centers
+    ycObstacle = 2.5.*ones(1, trialParams.nBlocks);                     % y coords of obstacle centers
+
+    xcObstacle(trialParams.obstacleTrials<1) = nan;
+    ycObstacle(trialParams.obstacleTrials<1) = nan;
 
 elseif strcmp(trialParams.obstacleArrangement,'random')
     % define N obstacles arranged randomly around home port
-    xcObstacle = randu(arena.xMin,arena.xMax,trialParams.nObstacles);   % x coords of obstacle centers
-    ycObstacle = randu(arena.yMin,arena.yMax,trialParams.nObstacles);   % y coords of obstacle centers
+    xcObstacle = randu(arena.xMin,arena.xMax,trialParams.nBlocks);      % x coords of obstacle centers
+    ycObstacle = randu(arena.yMin,arena.yMax,trialParams.nBlocks);      % y coords of obstacle centers
+
+    xcObstacle(trialParams.obstacleTrials<1) = nan;
+    ycObstacle(trialParams.obstacleTrials<1) = nan;
 
 else
     error('unrecoginized obstacle arrangement');
@@ -123,22 +129,34 @@ for i=1:numel(xcTarget)
     [xbndryTarget,ybndryTarget] = getBoundary(xbTarget,ybTarget,4*arena.np);
 
     % store bounds and boundaries
-    xBoundsTarget   = [xBoundsTarget;   xbTarget];
-    yBoundsTarget   = [yBoundsTarget;   ybTarget];
+    xBoundsTarget   = [xBoundsTarget;   xbTarget    ];
+    yBoundsTarget   = [yBoundsTarget;   ybTarget    ];
     xBoundaryTarget = [xBoundaryTarget; xbndryTarget];
     yBoundaryTarget = [yBoundaryTarget; ybndryTarget];
 
-    %----------------------- define obstacle bounds ----------------------%
+    %----------------------- define obstacle bounds ----------------------% 
+
+
+    if trialParams.obstacleTrials(i)>0.5
+        xcObstacleTmp = xcObstacle(i); 
+        ycObstacleTmp = ycObstacle(i); 
+    else
+        xcObstacleTmp = 0; 
+        ycObstacleTmp = 0; 
+    end
 
     %------------- true bounds of obstacle -----------%
     % generate obstacle mask (for plotting)
     obstacleMaskTmp = generateMask(arena.X,arena.Y,...
-        xcObstacle(i),ycObstacle(i),obstacle.width,obstacle.height);
+        xcObstacleTmp,ycObstacleTmp,obstacle.width,obstacle.height);
+    if trialParams.obstacleTrials(i)<0.5
+        obstacleMaskTmp = nan(size(obstacleMaskTmp));
+    end
     obstacleMasks   = cat(3,obstacleMasks,obstacleMaskTmp);
 
     % define bounds of obstacle
-    xbObst = [xcObstacle(i) - obstacle.width/2, xcObstacle(i) + obstacle.width/2 ];
-    ybObst = [ycObstacle(i) - obstacle.height/2,ycObstacle(i) + obstacle.height/2];
+    xbObst = [xcObstacleTmp - obstacle.width/2, xcObstacleTmp + obstacle.width/2 ];
+    ybObst = [ycObstacleTmp - obstacle.height/2,ycObstacleTmp + obstacle.height/2];
 
     % extract full boundary around obstacle
     [xbndryObst,ybndryObst] = ...
@@ -147,15 +165,14 @@ for i=1:numel(xcTarget)
     %----- effective bounds that agent traverses ----%
 
     % define bounds of obstacle
-    xbObst_agent = [xcObstacle(i) - obstacle.width/2  - planner.agentWidth/2, xcObstacle(i) + obstacle.width/2  + planner.agentWidth/2];
-    ybObst_agent = [ycObstacle(i) - obstacle.height/2 - planner.agentWidth/2, ycObstacle(i) + obstacle.height/2 + planner.agentWidth/2];
+    xbObst_agent = [xcObstacleTmp - obstacle.width/2  - planner.agentWidth/2, xcObstacleTmp + obstacle.width/2  + planner.agentWidth/2];
+    ybObst_agent = [ycObstacleTmp - obstacle.height/2 - planner.agentWidth/2, ycObstacleTmp + obstacle.height/2 + planner.agentWidth/2];
 
     % extract agent's view of obstacle boundary
     [xbndryObst_agent,ybndryObst_agent,hbObst_agent,indSides_agent,indCorners_agent,corners_agent] = ...
         getBoundary(xbObst_agent,ybObst_agent,4*arena.np);
 
     if trialParams.obstacleTrials(i)>0.5
-        
         % store bounds and boundaries
         xBoundsObst             = [xBoundsObst;    xbObst    ];
         yBoundsObst             = [yBoundsObst;    ybObst    ];
@@ -239,18 +256,18 @@ for i=1:numel(xcTarget)
     
         % region below obstacle
         trial.obstacle.agent.block(i).region(1).xBounds = arena.xBounds;
-        trial.obstacle.agent.block(i).region(1).yBounds = [-inf,trial.obstacle.agent.yBounds(1)];
+        trial.obstacle.agent.block(i).region(1).yBounds = [-inf,trial.obstacle.agent.yBounds(i,1)];
     
         % region to the right of the obstacle
-        trial.obstacle.agent.block(i).region(2).xBounds = [trial.obstacle.agent.xBounds(2),inf];
+        trial.obstacle.agent.block(i).region(2).xBounds = [trial.obstacle.agent.xBounds(i,2),inf];
         trial.obstacle.agent.block(i).region(2).yBounds = arena.yBounds;
     
         % region above the obstacle
         trial.obstacle.agent.block(i).region(3).xBounds = arena.xBounds;
-        trial.obstacle.agent.block(i).region(3).yBounds = [trial.obstacle.agent.yBounds(2),inf];
+        trial.obstacle.agent.block(i).region(3).yBounds = [trial.obstacle.agent.yBounds(i,2),inf];
         
         % region to the left of the obstacle
-        trial.obstacle.agent.block(i).region(4).xBounds = [-inf,trial.obstacle.agent.xBounds(1)];
+        trial.obstacle.agent.block(i).region(4).xBounds = [-inf,trial.obstacle.agent.xBounds(i,1)];
         trial.obstacle.agent.block(i).region(4).yBounds = arena.yBounds;
     
         for j=1:4

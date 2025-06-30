@@ -48,7 +48,7 @@ elseif strcmp(exptType,'interleaved obstacle')
     trialParams.nTrialsPerTarget    = 100;
     trialParams.targetArrangement   = 'centered';
     trialParams.obstacle            = 'true';
-    trialParams.nObstacles          = trialParams.nBlocks;
+    trialParams.nObstacles          = 1;
     trialParams.obstacleTrials      = zeros(1,trialParams.nBlocks);
     trialParams.obstacleTrials(2)   = 1;
     trialParams.obstacleArrangement = 'centered';
