@@ -31,6 +31,11 @@ elseif strcmp(trialParams.targetArrangement,'random')
     xcTarget = randu(arena.xMin,arena.xMax,trialParams.nTargets);       % x coords of target centers
     ycTarget = randu(arena.yMin,arena.yMax,trialParams.nTargets);       % y coords of target centers
 
+elseif strcmp(trialParams.obstacleArrangement,'centered')
+    % define N targets centered above home port
+    xcTarget = zeros(1,trialParams.nObstacles);                         % x coords of target centers
+    ycTarget = arena.size(2)/2.*ones(1,trialParams.nObstacles);         % y coords of target centers
+
 else
     error('unrecoginized target arrangement');
 end
@@ -42,9 +47,9 @@ if strcmp(trialParams.obstacleArrangement,'none')
     ycObstacle = nan(1,trialParams.nBlocks);
 
 elseif strcmp(trialParams.obstacleArrangement,'centered')
-    % define N obstacles centered above home port
-    xcObstacle = zeros(1,trialParams.nObstacles);                       % x coords of obstacle centers
-    ycObstacle = 2.5.*ones(1,trialParams.nObstacles);                   % y coords of obstacle centers
+    % define obstacles centered above home port
+    xcObstacle = zeros(1, trialParams.nObstacles);                      % x coords of obstacle centers
+    ycObstacle = 2.5.*ones(1, trialParams.nObstacles);                  % y coords of obstacle centers
 
 elseif strcmp(trialParams.obstacleArrangement,'random')
     % define N obstacles arranged randomly around home port
@@ -124,39 +129,39 @@ for i=1:numel(xcTarget)
     yBoundaryTarget = [yBoundaryTarget; ybndryTarget];
 
     %----------------------- define obstacle bounds ----------------------%
-    if ~strcmp(trialParams.obstacleArrangement,'none')
 
-        %-------------------- true bounds of obstacle --------------------%
-        % generate obstacle mask (for plotting)
-        obstacleMaskTmp = generateMask(arena.X,arena.Y,...
-            xcObstacle(i),ycObstacle(i),obstacle.width,obstacle.height);
-        obstacleMasks   = cat(3,obstacleMasks,obstacleMaskTmp);
+    %------------- true bounds of obstacle -----------%
+    % generate obstacle mask (for plotting)
+    obstacleMaskTmp = generateMask(arena.X,arena.Y,...
+        xcObstacle(i),ycObstacle(i),obstacle.width,obstacle.height);
+    obstacleMasks   = cat(3,obstacleMasks,obstacleMaskTmp);
 
-        % define bounds of obstacle
-        xbObst = [xcObstacle(i) - obstacle.width/2, xcObstacle(i) + obstacle.width/2 ];
-        ybObst = [ycObstacle(i) - obstacle.height/2,ycObstacle(i) + obstacle.height/2];
+    % define bounds of obstacle
+    xbObst = [xcObstacle(i) - obstacle.width/2, xcObstacle(i) + obstacle.width/2 ];
+    ybObst = [ycObstacle(i) - obstacle.height/2,ycObstacle(i) + obstacle.height/2];
 
-        % extract full boundary around obstacle
-        [xbndryObst,ybndryObst] = ...
-            getBoundary(xbObst,ybObst,4*arena.np);
-    
-        % store bounds and boundaries
-        xBoundsObst   = [xBoundsObst;    xbObst    ];
-        yBoundsObst   = [yBoundsObst;    ybObst    ];
-        xBoundaryObst = [xBoundaryObst;  xbndryObst];
-        yBoundaryObst = [yBoundaryObst;  ybndryObst];
+    % extract full boundary around obstacle
+    [xbndryObst,ybndryObst] = ...
+        getBoundary(xbObst,ybObst,4*arena.np);
+
+    %----- effective bounds that agent traverses ----%
+
+    % define bounds of obstacle
+    xbObst_agent = [xcObstacle(i) - obstacle.width/2  - planner.agentWidth/2, xcObstacle(i) + obstacle.width/2  + planner.agentWidth/2];
+    ybObst_agent = [ycObstacle(i) - obstacle.height/2 - planner.agentWidth/2, ycObstacle(i) + obstacle.height/2 + planner.agentWidth/2];
+
+    % extract agent's view of obstacle boundary
+    [xbndryObst_agent,ybndryObst_agent,hbObst_agent,indSides_agent,indCorners_agent,corners_agent] = ...
+        getBoundary(xbObst_agent,ybObst_agent,4*arena.np);
+
+    if trialParams.obstacleTrials(i)>0.5
         
-
-        %-------------- effective bounds that agent traverses ------------%
-
-        % define bounds of obstacle
-        xbObst_agent = [xcObstacle(i) - obstacle.width/2  - planner.agentWidth/2, xcObstacle(i) + obstacle.width/2  + planner.agentWidth/2];
-        ybObst_agent = [ycObstacle(i) - obstacle.height/2 - planner.agentWidth/2, ycObstacle(i) + obstacle.height/2 + planner.agentWidth/2];
-
-        % extract agent's view of obstacle boundary
-        [xbndryObst_agent,ybndryObst_agent,hbObst_agent,indSides_agent,indCorners_agent,corners_agent] = ...
-            getBoundary(xbObst_agent,ybObst_agent,4*arena.np);
-    
+        % store bounds and boundaries
+        xBoundsObst             = [xBoundsObst;    xbObst    ];
+        yBoundsObst             = [yBoundsObst;    ybObst    ];
+        xBoundaryObst           = [xBoundaryObst;  xbndryObst];
+        yBoundaryObst           = [yBoundaryObst;  ybndryObst];
+        
         % store bounds and boundaries
         xBoundsObst_agent       = [xBoundsObst_agent;       xbObst_agent    ];
         yBoundsObst_agent       = [yBoundsObst_agent;       ybObst_agent    ];
@@ -169,21 +174,18 @@ for i=1:numel(xcTarget)
 
     else
         % store bounds and boundaries
-        npBoundary = 2*(floor(planner.nInterp.*obstacle.width)...
-            +floor(planner.nInterp.*obstacle.height));
+        xBoundsObst             = [xBoundsObst;    nan(size(xbObst))    ];
+        yBoundsObst             = [yBoundsObst;    nan(size(ybObst))    ];
+        xBoundaryObst           = [xBoundaryObst;  nan(size(xbndryObst))];
+        yBoundaryObst           = [yBoundaryObst;  nan(size(ybndryObst))];
 
-        xBoundsObst   = [xBoundsObst;    nan(1,2)         ];
-        yBoundsObst   = [yBoundsObst;    nan(1,2)         ];
-        xBoundaryObst = [xBoundaryObst;  nan(1,npBoundary)];
-        yBoundaryObst = [yBoundaryObst;  nan(1,npBoundary)];
-
-        xBoundsObst_agent       = [xBoundsObst_agent;       nan(1,2)         ];
-        yBoundsObst_agent       = [yBoundsObst_agent;       nan(1,2)         ];
-        xBoundaryObst_agent     = [xBoundaryObst_agent;     nan(1,npBoundary)];
-        yBoundaryObst_agent     = [yBoundaryObst_agent;     nan(1,npBoundary)];
-        hBoundaryObst_agent     = [hBoundaryObst_agent;     nan(1,npBoundary)];
-        boundaryCornerIDs_agent = [boundaryCornerIDs_agent; nan(1,5)         ];
-        boundaryCorners_agent   = [boundaryCorners_agent;   nan(1,npBoundary)];
+        xBoundsObst_agent       = [xBoundsObst_agent;       nan(size(xbObst_agent))     ];
+        yBoundsObst_agent       = [yBoundsObst_agent;       nan(size(ybObst_agent))     ];
+        xBoundaryObst_agent     = [xBoundaryObst_agent;     nan(size(xbndryObst_agent)) ];
+        yBoundaryObst_agent     = [yBoundaryObst_agent;     nan(size(ybndryObst_agent)) ];
+        hBoundaryObst_agent     = [hBoundaryObst_agent;     nan(size(hbObst_agent))     ];
+        boundaryCornerIDs_agent = [boundaryCornerIDs_agent; nan(size(indCorners_agent)) ];
+        boundaryCorners_agent   = [boundaryCorners_agent;   nan(size(corners_agent))    ];
         boundarySides_agent{i}  = NaN;
     end
 
@@ -229,10 +231,11 @@ trial.obstacle.agent.indCorners = boundaryCornerIDs_agent;
 trial.obstacle.agent.corners    = boundaryCorners_agent;
 
 
-if ~strcmp(trialParams.obstacleArrangement,'none')
+for i=1:numel(xcTarget)
+    if trialParams.obstacleTrials(i)>0.5
     % define bounds of four regions around obstacle, use for computing solid
     % angle of obstacle wrt anchor points
-    for i=1:numel(xcTarget)
+    %for i=1:numel(xcTarget)
     
         % region below obstacle
         trial.obstacle.agent.block(i).region(1).xBounds = arena.xBounds;
