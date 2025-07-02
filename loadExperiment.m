@@ -1,4 +1,4 @@
-function [arena,belief,sampler,planner,trial] = loadExperiment(exptType, envType, agentType)
+function [arena,belief,sampler,planner,trial,agentParams] = loadExperiment(exptType, envType, agentType)
 % LOADEXPERIMENT Loads all data structures needed to run an simulated experiment.
 %
 %   [arena,belief,sampler,planner,trial] = LOADEXPERIMENT(exptType, envType, 

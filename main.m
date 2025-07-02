@@ -38,12 +38,12 @@ addpath("auxiliaryFunctions/","auxiliaryFunctions/peaks2/",...
 
 %% load plotting parameters
 
-plotType = 'whiteBG';                                                       % current options: 'whiteBG'
+plotType = 'whiteBG';                                                               % current options: 'whiteBG'
 plotParams = loadPlotParams(plotType);
 
 %% generate basic structures for environment, trial protocol, and agent
 
-[arena,belief,sampler,planner,trial] = loadExperiment('singleTarget');      % current trial type options: 'singleTarget', 'multiTarget', 'obstacle'
+[arena,belief,sampler,planner,trial,agentParams] = loadExperiment('singleTarget');  % current trial type options: 'singleTarget', 'multiTarget', 'obstacle'
 
 %% simulate a single agent and plot results from a single trial
 
