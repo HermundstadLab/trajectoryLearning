@@ -50,6 +50,10 @@ if belief.resetFlag && numel(surprise)>belief.resetWindow-1 && all(surprise(end-
 
         % update cache
         cache(:,:,contextToWrite) = targetPosterior;
+
+        % update context belief
+        contextPosterior = contextPrior;
+    
     end   
 
 else
