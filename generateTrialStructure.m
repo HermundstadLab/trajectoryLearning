@@ -272,8 +272,8 @@ for i=1:numel(xcTarget)
     
         for j=1:4
             inds = indSides_agent{j};
-            trial.obstacle.agent.block(i).region(j).xBoundary = trial.obstacle.agent.xBoundary(inds);
-            trial.obstacle.agent.block(i).region(j).yBoundary = trial.obstacle.agent.yBoundary(inds); 
+            trial.obstacle.agent.block(i).region(j).xBoundary = trial.obstacle.agent.xBoundary(i,inds);
+            trial.obstacle.agent.block(i).region(j).yBoundary = trial.obstacle.agent.yBoundary(i,inds); 
         end
     
     end
