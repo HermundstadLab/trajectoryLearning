@@ -57,17 +57,26 @@ else
     UB = min([[belief.thMax.*ones(1,nAnchors),belief.rMax.*ones(1,nAnchors),deltaMax];...
               [anchorsOrdered.thCoords+dthUB, anchorsOrdered.rCoords+drUB,  deltaMax]],[],1);
     
-    % define initial condition (add small uniform noise to original anchor locations)
-    delta = (deltaMax-deltaMin)*rand()+deltaMin;                     % initial guess for first heading angle
-    p0  = [anchorsOrdered.thCoords + anchorsOrdered.thTol.*rand(1,nAnchors)-anchorsOrdered.thTol/2,...
-           anchorsOrdered.rCoords  + anchorsOrdered.rTol.*rand( 1,nAnchors)-anchorsOrdered.rTol/2,...
-           delta];
-    e0  = errFnc([anchorsOrdered.thCoords,anchorsOrdered.rCoords,delta]);
-    
-    % optimize anchor placement
     options = optimoptions('fmincon','display','off','Algorithm','sqp');
-    [pmin,emin] = fmincon(@errFnc,p0,[],[],[],[],LB,UB,[],options);
-    
+    delta0 = (deltaMax-deltaMin)*rand()+deltaMin;
+    e0  = errFnc([anchorsOrdered.thCoords,anchorsOrdered.rCoords,delta0]);
+    pvec = [];
+    evec = [];
+    for i=1:planner.nOptima
+        % define initial condition (add small uniform noise to original anchor locations)
+        delta = (deltaMax-deltaMin)*rand()+deltaMin;                     % initial guess for first heading angle
+        p0  = [anchorsOrdered.thCoords + anchorsOrdered.thTol.*rand(1,nAnchors)-anchorsOrdered.thTol/2,...
+               anchorsOrdered.rCoords  + anchorsOrdered.rTol.*rand( 1,nAnchors)-anchorsOrdered.rTol/2,...
+               delta]; 
+        
+        % optimize anchor placement
+        [pminTmp,eminTmp] = fmincon(@errFnc,p0,[],[],[],[],LB,UB,[],options);
+        pvec = [pvec;pminTmp];
+        evec = [evec;eminTmp];
+    end
+    [emin,imin] = min(evec);
+    pmin = pvec(imin,:);
+
     % accept optimization if final curvilinear distance is lower than initial
     if emin<e0
         anchorsOpt.thCoords = pmin(1:nAnchors);
@@ -79,7 +88,7 @@ else
     
         trajectory = planTrajectory(anchorsOpt,deltaOpt,planner);
     else
-        trajectory = planTrajectory(anchorsOrdered,delta,planner);
+        trajectory = planTrajectory(anchorsOrdered,delta0,planner);
     end
     
 

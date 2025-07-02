@@ -180,7 +180,7 @@ planner.thTol_shift    = agentParams.anchorTolShift*belief.size(1); % default an
 planner.rTol_shift     = agentParams.anchorTolShift*belief.size(2); % default radial tolerance for shifting anchors (a.u.)
 planner.scaleTol       = agentParams.anchorTolScaling;              % determines whether to scale tolerances around individual anchors 
 planner.orderType      = agentParams.anchorOrderMethod;             % type of ordering to use for anchor points; 
-
+planner.nOptima        = agentParams.nOptima;                       % number of optimzations to perform for initial heading
 
 %----------------- define and store boundary trajectory ------------------%
 
