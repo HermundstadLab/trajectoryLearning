@@ -22,8 +22,9 @@ function simResults = runSingleAgent(belief,sampler,planner,trial)
 allCaches = nan(belief.cacheSize,belief.np,belief.np,trial.nTrials);
 
 %------------------- initialize priors, errormap, cache ------------------%
-uniformTargetPrior = belief.uniformTargetPrior;
-targetErrormap     = belief.mask.*zeros(belief.np,belief.np);
+uniformTargetPrior    = belief.uniformTargetPrior;
+uniformTargetErrormap = belief.mask.*zeros(belief.np,belief.np);
+targetErrormap        = uniformTargetErrormap;
 
 cache = [];
 for i=1:belief.cacheSize
@@ -42,10 +43,11 @@ for trialID=1:trial.nTrials
     uniformContextPrior(contextPosterior>0) = 1;
     uniformContextPrior = normalizeBelief(uniformContextPrior);
 
-    contextPosterior = applyMemoryDecay(contextPosterior,uniformContextPrior,belief);
+    contextPosterior = applyMemoryDecay(contextPosterior,uniformContextPrior,true,belief);
     for j=1:belief.cacheSize
-        cache(:,:,j) = applyMemoryDecay(cache(:,:,j),uniformTargetPrior,belief);
+        cache(:,:,j) = applyMemoryDecay(cache(:,:,j),uniformTargetPrior,true,belief);
     end
+    targetErrormap = applyMemoryDecay(targetErrormap,uniformTargetErrormap,false,belief);
 
     % update prior beliefs
     contextPrior = contextPosterior;
