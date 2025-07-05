@@ -1,6 +1,6 @@
 function [dth,dr] = dpol(thvec,rvec)
 % DPOL Compute the distance between points, using polar inputs. 
-%   [dr,dx,dy] = DPOL(xvec,yvec) computes the angular and radial distance 
+%   [dth,dr] = DPOL(thvec,rvec) computes the angular and radial distance 
 %   between successive elements in the 1D arrays thvec (radians) and rvec. 
 %   The arrays thvec and rvec must have the same size; if of size [1,n], 
 %   the output arrays dth (radians) and dr will be of size [1,n-1].
