@@ -1,8 +1,8 @@
-function [executedTrajectory,obstacleHit] = executeTrajectory(trajectory,trial,planner,trialID)
+function [executedTrajectory,obstacleHit] = executeTrajectory(trajectory,planner,trial,trialID)
 % EXECUTETRAJECTORY Execute planned trajectory, accounting for arena
 % boundaries and obstacles.
 %
-%   executedTrajectory = EXECUTETRAJECTORY(trajectory,arena,trial,planner,trialID)
+%   executedTrajectory = EXECUTETRAJECTORY(trajectory,planner,trial,trialID)
 %   takes as input a planned trajectory, and executes a version of the
 %   trajectory that is consistent with arena boundaries and obstacles.
 %   General and trial-specific properties of arena and obstacle boundaries
