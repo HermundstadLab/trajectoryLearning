@@ -18,56 +18,40 @@ function trial = generateTrialStructure(arena,target,obstacle,planner,trialParam
 %---------------------- target arrangement -------------------------------%
 if strcmp(trialParams.targetArrangement,'radial')
     % define N targets arranged radially around home port
-    thcTarget = linspace(0,pi,trialParams.nTargets+4);                  % define targets on semi-circle
-    thcTarget([1,2,trialParams.nTargets+3,trialParams.nTargets+4])=[];  % remove edges
+    thcTarget = linspace(0,pi,trialParams.nBlocks+4);                   % define targets on semi-circle
+    thcTarget([1,2,trialParams.nBlocks+3,trialParams.nBlocks+4])=[];    % remove edges
     [~,isort] = sort(abs(thcTarget-pi/2),'descend');                    % sort so that targets begin at center 
     thcTarget = thcTarget([isort(end),isort(1:end-1)]);                 %   and alternate around center
 
-    rcTarget  = arena.size(2)/2.*ones(1,trialParams.nTargets);          % radial distance to target centers
+    rcTarget  = arena.size(2)/2.*ones(1,trialParams.nBlocks);           % radial distance to target centers
     [xcTarget,ycTarget] = pol2cart(thcTarget,rcTarget);                 % x,y coordinates of target centers 
 
 elseif strcmp(trialParams.targetArrangement,'random')
     % define N targets arranged randomly around home port
-    xcTarget = randu(arena.xMin,arena.xMax,trialParams.nTargets);       % x coords of target centers
-    ycTarget = randu(arena.yMin,arena.yMax,trialParams.nTargets);       % y coords of target centers
+    xcTarget = randu(arena.xMin,arena.xMax,trialParams.nBlocks);        % x coords of target centers
+    ycTarget = randu(arena.yMin,arena.yMax,trialParams.nBlocks);        % y coords of target centers
 
 elseif strcmp(trialParams.targetArrangement,'centered')
     % define N targets centered above home port
-    xcTarget = zeros(1,trialParams.nTargets);                           % x coords of target centers
-    ycTarget = arena.size(2)/2.*ones(1,trialParams.nTargets);           % y coords of target centers
+    xcTarget = zeros(1,trialParams.nBlocks);                            % x coords of target centers
+    ycTarget = arena.size(2)/2.*ones(1,trialParams.nBlocks);            % y coords of target centers
 
 else
     error('unrecoginized target arrangement');
 end
 
 %-------------------- obstacle arrangement -------------------------------%
-if strcmp(trialParams.obstacleArrangement,'none')
-    % no obstacles
-    xcObstacle = nan(1,trialParams.nBlocks);
-    ycObstacle = nan(1,trialParams.nBlocks);
 
-elseif strcmp(trialParams.obstacleArrangement,'centered')
-    % define obstacles centered above home port
-    xcObstacle = zeros(1, trialParams.nBlocks);                         % x coords of obstacle centers
-    ycObstacle = 2.5.*ones(1, trialParams.nBlocks);                     % y coords of obstacle centers
+% define obstacles centered above home port
+xcObstacle = zeros(1, trialParams.nBlocks);                             % x coords of obstacle centers
+ycObstacle = arena.size(2)/4.*ones(1, trialParams.nBlocks);             % y coords of obstacle centers
 
-    xcObstacle(trialParams.obstacleTrials<1) = nan;
-    ycObstacle(trialParams.obstacleTrials<1) = nan;
-
-elseif strcmp(trialParams.obstacleArrangement,'random')
-    % define N obstacles arranged randomly around home port
-    xcObstacle = randu(arena.xMin,arena.xMax,trialParams.nBlocks);      % x coords of obstacle centers
-    ycObstacle = randu(arena.yMin,arena.yMax,trialParams.nBlocks);      % y coords of obstacle centers
-
-    xcObstacle(trialParams.obstacleTrials<1) = nan;
-    ycObstacle(trialParams.obstacleTrials<1) = nan;
-
-else
-    error('unrecoginized obstacle arrangement');
-end
+% remove obstacles on non-obstacle trials
+xcObstacle(trialParams.obstacleTrials<1) = nan;                         
+ycObstacle(trialParams.obstacleTrials<1) = nan;
 
 
-%----------------- extract agent's view of arena boundary ----------------%
+%-------------- extract agent's view of arena boundary -------------------%
 trial.arena.agent     = arena.agent;
 trial.arena.xBounds   = arena.xBounds;
 trial.arena.yBounds   = arena.yBounds;
@@ -83,6 +67,17 @@ for i=1:4
     trial.arena.agent.block(1).region(i).yBoundary = trial.arena.agent.yBoundary(inds); 
 end
 
+%------------------ agent's entry point into arena -----------------------%
+entryPoints = [[0,0];...
+    [arena.agent.xBounds(2),arena.agent.yBounds(1)+diff(arena.agent.yBounds).*3/4];...
+    [arena.agent.xBounds(1)+diff(arena.agent.xBounds)/4,arena.agent.yBounds(2)];...
+    [arena.agent.xBounds(1),arena.agent.yBounds(1)+diff(arena.agent.yBounds)./2]];
+
+trial.arena.agent.entryPoint = nan(trialParams.nBlocks,2);
+for i=1:trialParams.nBlocks
+    wallInd = trialParams.entryWall(i)+1;
+    trial.arena.agent.entryPoint(i,:) = entryPoints(wallInd,:);
+end
 
 
 %------------- initialize variables for targets & obstacles --------------%
@@ -115,7 +110,7 @@ boundarySides_agent     = cell(numel(xcTarget),1);
 for i=1:numel(xcTarget)
 
     %----------------------- define target bounds ------------------------%
-    blockIDs = [blockIDs,i.*ones(1,trialParams.nTrialsPerTarget)];
+    blockIDs = [blockIDs,i.*ones(1,trialParams.nTrialsPerBlock)];
 
     targetMaskTmp   = generateMask(arena.X,arena.Y,...
         xcTarget(i),ycTarget(i),target.width,target.height);
@@ -211,10 +206,7 @@ end
 %---------------------- build output structure ----------------------------%
 trial.exptType            = trialParams.exptType;
 trial.targetArrangement   = trialParams.targetArrangement;
-trial.obstacleArrangement = trialParams.obstacleArrangement;
 
-trial.nTargets            = trialParams.nTargets;
-trial.nObstacles          = trialParams.nObstacles;
 trial.nTrials             = numel(blockIDs);
 trial.blockIDs            = blockIDs;
 

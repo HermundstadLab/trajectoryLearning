@@ -1,4 +1,4 @@
-function trajectory = optimizeTrajectory(anchors,belief,planner)
+function trajectory = optimizeTrajectory(anchors,belief,planner,trial,trialID)
 % OPTIMIZETRAJECTORY Plan and optimize a trajectory.
 %
 %   trajectory = OPTIMIZETRAJECTORY(anchors,belief,planner) uses a set of
@@ -27,7 +27,7 @@ else
 
     %---------------------- optimize anchor order ------------------------%
     % determine optimal ordering of anchors
-    anchorsOrdered = orderAnchors(anchors,planner);
+    anchorsOrdered = orderAnchors(anchors,planner,trial,trialID);
     
     
     %-------------------- optimize anchor locations ----------------------%
@@ -44,10 +44,9 @@ else
     end
     dthUB = dthLB;                                      % angular shift, upper bound 
     drUB  = drLB;                                       % radial shift,  upper bound 
-    
-    [dth,~] = dpol(anchorsOrdered.thCoords(1:2),anchorsOrdered.rCoords(1:2));
-    deltaMin = max(0,-dth);
-    deltaMax = min(pi,pi-dth);
+
+    deltaMin = -pi/2;
+    deltaMax =  pi/2;
 
     % define bounds for optimization (defined by the maximum of the lower bound
     % and the minimum boundaries of the arena, and similarly by the minimum of

@@ -1,4 +1,4 @@
-function anchorsOrdered = orderAnchors(anchors,planner)
+function anchorsOrdered = orderAnchors(anchors,planner,trial,trialID)
 % ORDERANCHORS Determines an ordering for anchors that will be used to
 % generate a curvilinear trajectory.
 %
@@ -13,23 +13,29 @@ nAnchors    = anchors.N;                                % number of anchors to o
 nAnchorsMax = 5;                                        % number of anchors whose orderings
                                                         %    can be quickly enumerated
 
+% compute vector from entry point to home port
+xEntry = trial.arena.agent.entryPoint(trial.blockIDs(trialID),1);
+yEntry = trial.arena.agent.entryPoint(trial.blockIDs(trialID),2);
+[thEntry,rEntry] = cart2pol(xEntry,yEntry);
+
 % order achors according to angle 
 % (randomized ascending/descending sorting)
 if rand()>0.5
-    [anchors.thCoords,indsort] = sort(anchors.thCoords,'descend');
+    [~,indsort] = sort(anchors.thCoords-thEntry,'descend');
 else
-    [anchors.thCoords,indsort] = sort(anchors.thCoords,'ascend');
+    [~,indsort] = sort(anchors.thCoords-thEntry,'ascend');
 end
-anchors.rCoords = anchors.rCoords(indsort);
-anchors.thTol   = anchors.thTol(  indsort);
-anchors.rTol    = anchors.rTol(   indsort);
+anchors.thCoords = anchors.thCoords(indsort);
+anchors.rCoords  = anchors.rCoords( indsort);
+anchors.thTol    = anchors.thTol(   indsort);
+anchors.rTol     = anchors.rTol(    indsort);
 
 if strcmp(planner.orderType,'angle')
     % return anchors ordered by angle, 
     % with home port appended
 
-    anchorsOrdered.thCoords = [0,anchors.thCoords,0];
-    anchorsOrdered.rCoords  = [0,anchors.rCoords, 0];
+    anchorsOrdered.thCoords = [thEntry,anchors.thCoords,0];
+    anchorsOrdered.rCoords  = [rEntry, anchors.rCoords, 0];
     anchorsOrdered.thTol    = [planner.thTol_shift,anchors.thTol,planner.thTol_shift];
     anchorsOrdered.rTol     = [planner.rTol_shift, anchors.rTol, planner.rTol_shift ];
     anchorsOrdered.N        = numel(anchorsOrdered.thCoords);
@@ -42,9 +48,9 @@ elseif strcmp(planner.orderType,'TSP')
     nSets   = ceil(nAnchors/nAnchorsMax);
     permSet = cell(1,nSets);
 
-    % initialize anchor coordinates and tolerances with home port anchor
-    thCoords = 0;                                         
-    rCoords  = 0;
+    % initialize anchor coordinates and tolerances with entry point
+    thCoords = thEntry;                                         
+    rCoords  = rEntry;
     thTol = planner.thTol_shift;
     rTol  = planner.rTol_shift;
     for i=1:nSets
@@ -74,7 +80,7 @@ elseif strcmp(planner.orderType,'TSP')
         end
 
         % find ordering that minimizes distance 
-        [~,isel]  = min(netDist);
+        [~,isel] = min(netDist);
         thCoords = [thCoords,anchors.thCoords(permSet{i}(isel,:)),finalAnchor_thCoords];
         rCoords  = [rCoords, anchors.rCoords( permSet{i}(isel,:)),finalAnchor_rCoords ];
         thTol    = [thTol,   anchors.thTol(   permSet{i}(isel,:)),finalAnchor_thTol   ];

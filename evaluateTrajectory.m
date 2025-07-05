@@ -1,4 +1,4 @@
-function plannedTrajectory = evaluateTrajectory(trajectory,errormap,belief,sampler,planner)
+function plannedTrajectory = evaluateTrajectory(trajectory,errormap,belief,sampler,planner,trial,trialID)
 % EVALUATETRAJECTORY Determine whether planned trajectory is likely to 
 % intercept an obstacle, and readjust if necessary.
 %
@@ -38,7 +38,7 @@ if predError<sampler.errorThreshold && ~trajectory.boundaryFlag
     anchors.N = numel(anchors.thCoords);
 
     % plan new trajectory through augmented set of anchors
-    plannedTrajectory = optimizeTrajectory(anchors,belief,planner);
+    plannedTrajectory = optimizeTrajectory(anchors,belief,planner,trial,trialID);
 
 %otherwise, proceed with initial plan for trajectory
 else

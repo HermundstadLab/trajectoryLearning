@@ -11,47 +11,59 @@ function trialParams = loadTrialParams(exptType)
 %
 %   See also: LOADENVIRONMENTPARAMS, LOADAGENTPARAMS
 
+% the simulation is divided into blocks, each of which is defined by a
+% target location, obstacle location (if any), and entry point:
+%
+% nBlocks:              number of blocks of trials 
+% nTrialsPerBlocks:     number of trials per block
+% targetArrangement:    specifies whether targets are placed in the center
+%                           of the arena ('centered'), arranged radially
+%                           ('radial'), or arranged randomly ('random')
+% obstacleTrials:       binary vectory specifying presence/absence of 
+%                           obstacle on each block of trials
+% entryWall:            vector specifying whether the agent enters on the:
+%                           0: south wall
+%                           1: east wall
+%                           2: north wall
+%                           3: west wall
+
 trialParams.exptType = exptType;
 if strcmp(exptType,'multiTarget')
     trialParams.nBlocks             = 5;
-    trialParams.nTargets            = trialParams.nBlocks;
-    trialParams.nTrialsPerTarget    = 100;
+    trialParams.nTrialsPerBlock     = 100;
     trialParams.targetArrangement   = 'radial';
-    trialParams.obstacle            = 'false';
-    trialParams.nObstacles          = 0;
     trialParams.obstacleTrials      = zeros(1,trialParams.nBlocks);
-    trialParams.obstacleArrangement = 'none';
+    trialParams.entryWall           = zeros(1,trialParams.nBlocks);
 
 elseif strcmp(exptType,'singleTarget')
     trialParams.nBlocks             = 1;
-    trialParams.nTargets            = trialParams.nBlocks;
-    trialParams.nTrialsPerTarget    = 50;
+    trialParams.nTrialsPerBlock     = 100;
     trialParams.targetArrangement   = 'radial';
-    trialParams.obstacle            = 'false';
-    trialParams.nObstacles          = 0;
     trialParams.obstacleTrials      = zeros(1,trialParams.nBlocks);
-    trialParams.obstacleArrangement = 'none';
+    trialParams.entryWall           = zeros(1,trialParams.nBlocks);
 
 elseif strcmp(exptType,'obstacle')
     trialParams.nBlocks             = 1;
-    trialParams.nTargets            = trialParams.nBlocks;
-    trialParams.nTrialsPerTarget    = 100;
+    trialParams.nTrialsPerBlock     = 100;
     trialParams.targetArrangement   = 'radial';
-    trialParams.obstacle            = 'true';
-    trialParams.nObstacles          = trialParams.nBlocks;
     trialParams.obstacleTrials      = ones(1,trialParams.nBlocks);
-    trialParams.obstacleArrangement = 'centered';
+    trialParams.entryWall           = zeros(1,trialParams.nBlocks);
 
 elseif strcmp(exptType,'interleaved obstacle')
     trialParams.nBlocks             = 3;
-    trialParams.nTargets            = trialParams.nBlocks;
-    trialParams.nTrialsPerTarget    = 100;
+    trialParams.nTrialsPerBlock     = 100;
     trialParams.targetArrangement   = 'centered';
-    trialParams.obstacle            = 'true';
-    trialParams.nObstacles          = 1;
     trialParams.obstacleTrials      = zeros(1,trialParams.nBlocks);
     trialParams.obstacleTrials(2)   = 1;
-    trialParams.obstacleArrangement = 'centered';
+    trialParams.entryWall           = zeros(1,trialParams.nBlocks);
+
+elseif strcmp(exptType,'new entry')
+    trialParams.nBlocks             = 3;
+    trialParams.nTrialsPerBlock     = 20;
+    trialParams.targetArrangement   = 'centered';
+    trialParams.obstacleTrials      = zeros(1,trialParams.nBlocks);
+    trialParams.entryWall           = zeros(1,trialParams.nBlocks);
+    trialParams.entryWall(2:3)      = [1,3];
 
 else
     error('unrecognized experiment type')

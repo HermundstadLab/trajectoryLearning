@@ -60,14 +60,14 @@ for trialID=1:trial.nTrials
     anchors = sampleAnchors(targetPriorToRead,belief,sampler,planner);
 
     % plan optimal trajectory through the set of anchors
-    plannedTrajectory = optimizeTrajectory(anchors,belief,planner);
+    plannedTrajectory = optimizeTrajectory(anchors,belief,planner,trial,trialID);
 
     % evaluate whether planned trajectory is likely to intercept obstacles;
     % if so, augment anchor points to avoid obstacle
-    plannedTrajectory = evaluateTrajectory(plannedTrajectory,targetErrormap,belief,sampler,planner);
+    plannedTrajectory = evaluateTrajectory(plannedTrajectory,targetErrormap,belief,sampler,planner,trial,trialID);
 
     % execute trajectory; adjust based on arena boundaries and obstacles
-    [executedTrajectory,obstacleHit(trialID)] = executeTrajectory(plannedTrajectory,trial,planner,trialID);
+    [executedTrajectory,obstacleHit(trialID)] = executeTrajectory(plannedTrajectory,planner,trial,trialID);
     boundaryFlag(trialID) = executedTrajectory.boundaryFlag;
 
     % use planned and executed trajectories to compute likelihood

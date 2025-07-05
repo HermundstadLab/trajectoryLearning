@@ -37,7 +37,7 @@ if strcmp(agentType,'default')
 
     agentParams.anchorTolMerge        = 0.05;                   % tolerance for merging anchors (n.u.)
     agentParams.anchorTolShift        = 0.005;                  % tolerance for shifting anchors (n.u.)    
-    agentParams.anchorSamplingNoise   = 0;%0.01;                   % noise in sampling anchors (n.u.) 
+    agentParams.anchorSamplingNoise   = 0.01;                   % noise in sampling anchors (n.u.) 
                                                                 %   (should be ~less than the ratio of the target width to arena width)
     agentParams.anchorInit            = 10;                     % initial number of anchors
     agentParams.anchorTolScaling      = true;                   % determines whether to scale tolerances around individual anchors 
@@ -52,7 +52,7 @@ if strcmp(agentType,'default')
     agentParams.timeInterp            = 100;                    % number of timepoints to use to interpolate trajectories
     agentParams.spaceInterp           = 0.25;                   % number of spatial points to interpolate trajectories around obstacles
                                                                 %   (expressed as percentage of belief space per unit distance)
-                                                                
+
     agentParams.nOptima               = 5;                      % number of optimzations to perform for initial heading
 
 %elseif strcmp(agentType,'new agent type')                      % uncomment to add new agent types

@@ -18,8 +18,8 @@ end
 dth0    = 0;
 
 % store anchors and initial heading
-trajectory.anchors         = anchors;
-trajectory.delta           = delta;
+trajectory.anchors    = anchors;
+trajectory.delta      = delta;
 
 % initialize trajectory properties
 trajectory.prevAnchor = [];

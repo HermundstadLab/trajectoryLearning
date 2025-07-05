@@ -15,8 +15,8 @@ function multiAgentResults = runMultipleAgents(nAgents,belief,sampler,planner,tr
 nTrials = trial.nTrials;
 nBlocks = numel(unique(trial.blockIDs));
 
-parfor i=1:nAgents
-    %disp(['running agent ',num2str(i)]);
+for i=1:nAgents
+    disp(['running agent ',num2str(i)]);
     singleAgentResults = runSingleAgent(belief,sampler,planner,trial);
 
     contextPosteriorTemp = nan(belief.cacheSize,nTrials);
