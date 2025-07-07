@@ -1,4 +1,4 @@
-function trajectory = optimizeTrajectory(anchors,belief,planner,trial,trialID)
+function [trajectory,anchorIDsOrdered] = optimizeTrajectory(anchors,belief,planner,trial,trialID)
 % OPTIMIZETRAJECTORY Plan and optimize a trajectory.
 %
 %   trajectory = OPTIMIZETRAJECTORY(anchors,belief,planner) uses a set of
@@ -27,7 +27,7 @@ else
 
     %---------------------- optimize anchor order ------------------------%
     % determine optimal ordering of anchors
-    anchorsOrdered = orderAnchors(anchors,planner,trial,trialID);
+    [anchorsOrdered,anchorIDsOrdered] = orderAnchors(anchors,planner,trial,trialID);
     
     
     %-------------------- optimize anchor locations ----------------------%

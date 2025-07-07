@@ -31,18 +31,22 @@ if predError<sampler.errorThreshold && ~trajectory.boundaryFlag
 
     % remove home port from existing set of anchor points, and augment 
     % set with newly sampled anchor points
-    anchors.thCoords = [trajectory.anchors.thCoords(2:end-1),anchorsAug.thCoords                      ];
-    anchors.rCoords  = [trajectory.anchors.rCoords( 2:end-1),anchorsAug.rCoords                       ];
-    anchors.thTol    = [trajectory.anchors.thTol(   2:end-1),planner.thTol_shift.*ones(1,anchorsAug.N)];
-    anchors.rTol     = [trajectory.anchors.rTol(    2:end-1),planner.rTol_shift.*ones( 1,anchorsAug.N)];
-    anchors.N = numel(anchors.thCoords);
+    anchors.thCoords  = [trajectory.anchors.thCoords(2:end-1),anchorsAug.thCoords                      ];
+    anchors.rCoords   = [trajectory.anchors.rCoords( 2:end-1),anchorsAug.rCoords                       ];
+    anchors.thTol     = [trajectory.anchors.thTol(   2:end-1),planner.thTol_shift.*ones(1,anchorsAug.N)];
+    anchors.rTol      = [trajectory.anchors.rTol(    2:end-1),planner.rTol_shift.*ones( 1,anchorsAug.N)];
+    anchors.N         = numel(anchors.thCoords);
+    anchors.augmented = [zeros(1,numel(trajectory.anchors.thCoords(2:end-1))),...
+        ones(1,numel(anchorsAug.thCoords))];
 
     % plan new trajectory through augmented set of anchors
-    plannedTrajectory = optimizeTrajectory(anchors,belief,planner,trial,trialID);
+    [plannedTrajectory,orderedAnchorIDs] = optimizeTrajectory(anchors,belief,planner,trial,trialID);
+    plannedTrajectory.anchors.augmented  = [0,anchors.augmented(orderedAnchorIDs(2:end-1)),0];
 
 %otherwise, proceed with initial plan for trajectory
 else
     plannedTrajectory = trajectory;
+    plannedTrajectory.anchors.augmented = zeros(size(plannedTrajectory.anchors.thCoords));
 end
 
 end

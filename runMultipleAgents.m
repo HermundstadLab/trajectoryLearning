@@ -24,12 +24,12 @@ for i=1:nAgents
     contextPosteriorTemp(:,1:np) = singleAgentResults.belief.context.posteriors;
 
     % store trajectory properties
-    rewardRate = [rewardRate, singleAgentResults.trajectory.rewards          ];
-    nAnchors   = [nAnchors,   singleAgentResults.trajectory.planned.nAnchors ];
-    obstHits   = [obstHits,   singleAgentResults.trajectory.obstacleHits     ];
-    boundary   = [boundary,   singleAgentResults.trajectory.boundaryFlag     ];
-    distance   = [distance,   singleAgentResults.trajectory.executed.distance];
-    latency    = [latency,    singleAgentResults.trajectory.executed.latency ];
+    rewardRate = [rewardRate, singleAgentResults.trajectory.rewards            ];
+    nAnchors   = [nAnchors,   singleAgentResults.trajectory.augmented.nAnchors ];
+    obstHits   = [obstHits,   singleAgentResults.trajectory.obstacleHits       ];
+    boundary   = [boundary,   singleAgentResults.trajectory.boundaryFlag       ];
+    distance   = [distance,   singleAgentResults.trajectory.executed.distance  ];
+    latency    = [latency,    singleAgentResults.trajectory.executed.latency   ];
 
     % store belief properties
     rewardProb      = [rewardProb,      singleAgentResults.belief.target.rewardProb      ];

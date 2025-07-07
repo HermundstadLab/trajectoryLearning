@@ -1,4 +1,4 @@
-function anchorsOrdered = orderAnchors(anchors,planner,trial,trialID)
+function [anchorsOrdered,anchorIDsOrdered] = orderAnchors(anchors,planner,trial,trialID)
 % ORDERANCHORS Determines an ordering for anchors that will be used to
 % generate a curvilinear trajectory.
 %
@@ -9,9 +9,11 @@ function anchorsOrdered = orderAnchors(anchors,planner,trial,trialID)
 %
 %   See also: MERGEANCHORS, PLANTRAJECTORY, OPTIMIZETRAJECTORY
 
-nAnchors    = anchors.N;                                % number of anchors to order                      
+nAnchors    = anchors.N;                                % number of anchors to order        
+anchorIDs   = 1:nAnchors;                               % anchor IDs (to keep track of reorderings)
 nAnchorsMax = 5;                                        % number of anchors whose orderings
                                                         %    can be quickly enumerated
+                                                   
 
 % compute vector from entry point to home port
 xEntry = trial.arena.agent.entryPoint(trial.blockIDs(trialID),1);
@@ -29,6 +31,7 @@ anchors.thCoords = anchors.thCoords(indsort);
 anchors.rCoords  = anchors.rCoords( indsort);
 anchors.thTol    = anchors.thTol(   indsort);
 anchors.rTol     = anchors.rTol(    indsort);
+anchorIDs        = anchorIDs(       indsort);
 
 if strcmp(planner.orderType,'angle')
     % return anchors ordered by angle, 
@@ -40,6 +43,8 @@ if strcmp(planner.orderType,'angle')
     anchorsOrdered.rTol     = [planner.rTol_shift, anchors.rTol, planner.rTol_shift ];
     anchorsOrdered.N        = numel(anchorsOrdered.thCoords);
 
+    anchorIDsOrdered        = anchorIDs;
+
 elseif strcmp(planner.orderType,'TSP')
     % solve approximate traveling salesman problem;
     % if more than nmax anchors, break into subproblems defined by
@@ -47,6 +52,7 @@ elseif strcmp(planner.orderType,'TSP')
 
     nSets   = ceil(nAnchors/nAnchorsMax);
     permSet = cell(1,nSets);
+    anchorIDsOrdered = [];
 
     % initialize anchor coordinates and tolerances with entry point
     thCoords = thEntry;                                         
@@ -85,6 +91,8 @@ elseif strcmp(planner.orderType,'TSP')
         rCoords  = [rCoords, anchors.rCoords( permSet{i}(isel,:)),finalAnchor_rCoords ];
         thTol    = [thTol,   anchors.thTol(   permSet{i}(isel,:)),finalAnchor_thTol   ];
         rTol     = [rTol,    anchors.rTol(    permSet{i}(isel,:)),finalAnchor_rTol    ];
+
+        anchorIDsOrdered = [anchorIDsOrdered,anchorIDs(permSet{i}(isel,:))];
     end
 
     %return ordered set of anchors, with home port appended
@@ -92,6 +100,8 @@ elseif strcmp(planner.orderType,'TSP')
     anchorsOrdered.rCoords  = rCoords;
     anchorsOrdered.thTol    = thTol;
     anchorsOrdered.rTol     = rTol;
+
+    anchorIDsOrdered = [nan,anchorIDsOrdered,nan];
 else
     error('unrecognized anchor ordering')
 end
