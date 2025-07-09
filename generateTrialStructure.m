@@ -1,21 +1,140 @@
-function trial = generateTrialStructure(arena,target,obstacle,planner,trialParams)
+function trial = generateTrialStructure(environment,exptType,varargin)
 % GENERATETRIALSTRUCTURE Generate a structure that specifies the current
 % trial configuration.
 %
-%   trial = GENERATETRIALSTRUCTURE(arena,target,obstacle,trialParams) takes 
-%   as inputs structures that specify parameter values for the trial 
-%   protocol, together with structures that specify properties of the arena,
-%   target, and obstacle, and returns a structure that specifies the
-%   protocol for individual trials.
+%   trial = GENERATETRIALSTRUCTURE(environment,exptType,varargin) takes 
+%   as inputs a structure that specifies the environment ('environment'), 
+%   and a string that specifies the experimental protocol. Variable input 
+%   arguments can be used to override default parameter settings.
 %
-%   In order to construct the required input structures, the functions
-%   loadEnvironmentParams, generateEnvironment, loadAgentParams, and
-%   loadTrialParams must be run before running loadAgentParams.
+%   In order to construct the required input structure, the function
+%   generateEnvironment must be run before running generateTrialStructure.
 %
-%   See also: LOADENVIRONMENTPARAMS, GENERATEAGENTENVIRONMENT, 
-%             LOADAGENTPARAMS, LOADTRIALPARAMS
+%   REQUIRED INPUTS:
+%   'environment'         structure that specifies properties of the
+%                             environment
+%   'exptType'            type of experiment to run ('singleTarget',
+%                             'multiTarget', 'obstacle', 'interleaved 
+%                             obstacle', 'new entry')
+%
+%   VARIABLE INPUTS:
+%   'nBlocks':            number of blocks of trials 
+%   'nTrialsPerBlock':    number of trials per block
+%   'targetArrangement':  specifies whether targets are placed in the center
+%                             of the arena ('centered'), arranged radially
+%                             ('radial'), or arranged randomly ('random')
+%   'obstacleTrial:       binary vectory specifying presence/absence of 
+%                             obstacle on each block of trials
+%   'entryWall':          vector specifying whether the agent enters on the:
+%                             0: south wall
+%                             1: east wall
+%                             2: north wall
+%                             3: west wall
+%
+%   See also: GENERATEAGENTENVIRONMENT, GENERATEAGENT
+
+%---------------------- parse inputs -------------------------------------%
+
+p = inputParser;
+if strcmp(exptType,'multiTarget')
+    default_nBlocks             = 5;
+    default_nTrialsPerBlock     = 100;
+    default_targetArrangement   = 'radial';
+    default_obstacleTrials      = zeros(1,default_nBlocks);
+    default_entryWall           = zeros(1,default_nBlocks);
+
+elseif strcmp(exptType,'singleTarget')
+    default_nBlocks             = 1;
+    default_nTrialsPerBlock     = 100;
+    default_targetArrangement   = 'radial';
+    default_obstacleTrials      = zeros(1,default_nBlocks);
+    default_entryWall           = zeros(1,default_nBlocks);
+
+elseif strcmp(exptType,'obstacle')
+    default_nBlocks             = 1;
+    default_nTrialsPerBlock     = 100;
+    default_targetArrangement   = 'radial';
+    default_obstacleTrials      = ones(1,default_nBlocks);
+    default_entryWall           = zeros(1,default_nBlocks);
+
+elseif strcmp(exptType,'interleaved obstacle')
+    default_nBlocks             = 3;
+    default_nTrialsPerBlock     = 100;
+    default_targetArrangement   = 'centered';
+    default_obstacleTrials      = zeros(1,default_nBlocks);
+    default_obstacleTrials(2)   = 1;
+    default_entryWall           = zeros(1,default_nBlocks);
+
+elseif strcmp(exptType,'new entry')
+    default_nBlocks             = 4;
+    default_nTrialsPerBlock     = 20;
+    default_targetArrangement   = 'centered';
+    default_obstacleTrials      = zeros(1,default_nBlocks);
+    default_entryWall           = zeros(1,default_nBlocks);
+    default_entryWall(2:4)      = [1,2,3];
+
+else
+    error('unrecognized experiment type')
+end
+
+validExptTypes = {'new entry','interleaved obstacle','obstacle','singleTarget','multiTarget'};
+checkExptTypes = @(x) any(validatestring(x,validExptTypes));
+
+validTargetArrangements = {'centered','radial','random'};
+checkTargetArrangements = @(x) any(validatestring(x,validTargetArrangements));
+
+validateStructure = @(x) isstruct(x);
+validateNumeric   = @(x) isnumeric(x);
+validateInteger   = @(x) floor(x)==x;
+
+addRequired( p,'environment',validateStructure);
+addRequired( p,'exptType',checkExptTypes);
+
+addOptional( p,'targetArrangement',default_targetArrangement,checkTargetArrangements)
+
+addParameter(p,'nBlocks',default_nBlocks,validateInteger)
+addParameter(p,'nTrialsPerBlock',default_nTrialsPerBlock,validateInteger)
+addParameter(p,'obstacleTrials',default_obstacleTrials,validateNumeric)
+addParameter(p,'entryWall',default_entryWall,validateNumeric)
+
+parse(p,environment,exptType,varargin{:})
+trialParams.exptType            = p.Results.exptType;
+trialParams.nBlocks             = p.Results.nBlocks;
+trialParams.nTrialsPerBlock     = p.Results.nTrialsPerBlock;
+trialParams.targetArrangement   = p.Results.targetArrangement;
+trialParams.obstacleTrials      = p.Results.obstacleTrials;
+trialParams.entryWall           = p.Results.entryWall;
+
+% adjust vector lengths if necessary
+if numel(trialParams.obstacleTrials)~=trialParams.nBlocks
+    if ~strcmp(trialParams.exptType,'obstacle')
+        disp('defaulting to no obstacles')
+        trialParams.obstacleTrials = zeros(1,trialParams.nBlocks);
+    else
+        disp('defaulting to obstacles on every block')
+        trialParams.obstacleTrials = ones(1,trialParams.nBlocks);
+    end
+end
+
+if numel(trialParams.entryWall)~=trialParams.nBlocks
+    if ~strcmp(trialParams.exptType,'new entry')
+        disp('defaulting arena entries to origin')
+        trialParams.entryWall = zeros(1,trialParams.nBlocks);
+    else
+        disp('defaulting to random selection of entrance wall')
+        trialParams.entryWall = zeros(1,trialParams.nBlocks);
+        for i=1:trialParams.nBlocks
+            trialParams.entryWall(i) = randperm(trialParams.nBlocks,1)-1;
+        end
+    end
+end
+
+arena    = environment.arena;
+target   = environment.target;
+obstacle = environment.obstacle;
 
 %---------------------- target arrangement -------------------------------%
+
 if strcmp(trialParams.targetArrangement,'radial')
     % define N targets arranged radially around home port
     thcTarget = linspace(0,pi,trialParams.nBlocks+4);                   % define targets on semi-circle
@@ -35,9 +154,6 @@ elseif strcmp(trialParams.targetArrangement,'centered')
     % define N targets centered above home port
     xcTarget = zeros(1,trialParams.nBlocks);                            % x coords of target centers
     ycTarget = arena.size(2)/2.*ones(1,trialParams.nBlocks);            % y coords of target centers
-
-else
-    error('unrecoginized target arrangement');
 end
 
 %-------------------- obstacle arrangement -------------------------------%
@@ -131,7 +247,6 @@ for i=1:numel(xcTarget)
 
     %----------------------- define obstacle bounds ----------------------% 
 
-
     if trialParams.obstacleTrials(i)>0.5
         xcObstacleTmp = xcObstacle(i); 
         ycObstacleTmp = ycObstacle(i); 
@@ -160,8 +275,8 @@ for i=1:numel(xcTarget)
     %----- effective bounds that agent traverses ----%
 
     % define bounds of obstacle
-    xbObst_agent = [xcObstacleTmp - obstacle.width/2  - planner.agentWidth/2, xcObstacleTmp + obstacle.width/2  + planner.agentWidth/2];
-    ybObst_agent = [ycObstacleTmp - obstacle.height/2 - planner.agentWidth/2, ycObstacleTmp + obstacle.height/2 + planner.agentWidth/2];
+    xbObst_agent = [xcObstacleTmp - obstacle.width/2  - arena.agent.agentWidth/2, xcObstacleTmp + obstacle.width/2  + arena.agent.agentWidth/2];
+    ybObst_agent = [ycObstacleTmp - obstacle.height/2 - arena.agent.agentWidth/2, ycObstacleTmp + obstacle.height/2 + arena.agent.agentWidth/2];
 
     % extract agent's view of obstacle boundary
     [xbndryObst_agent,ybndryObst_agent,hbObst_agent,indSides_agent,indCorners_agent,corners_agent] = ...

@@ -1,11 +1,16 @@
-function simResults = runSingleAgent(belief,sampler,planner,trial)
+function singleAgentResults = runSingleAgent(agent,trial)
 % RUNSINGLEAGENT Simulates an agent that learns to intercept a target.
 %
-%   simResults = RUNSINGLEAGENT(arena,belief,sampler,planner,trial) takes as 
-%   input several structures that specify properties of the arena (in 'arena'), 
-%   properties of the agent (in 'belief', 'sampler', and 'planner'), and 
-%   the trial protocol (in 'trial'), and returns a structure that contains
-%   the output of a simulated agent. 
+%   singleAgentResults = RUNSINGLEAGENT(agent,trial) takes as input two structures 
+%   that specify properties of the agent (in 'agent', including 'belief', 
+%   'sampler', and 'planner' modules) and trial protocol (in 'trial'), 
+%   and returns a structure that contains the output of a simulated agent. 
+
+%---------------------- extract agent structures -------------------------%
+belief  = agent.belief;
+sampler = agent.sampler;
+planner = agent.planner;
+
 
 %--------------------- initialize storage variables ----------------------%
 [executedTargetLikelihoods,plannedTargetLikelihoods,...
@@ -139,43 +144,43 @@ end
 
 %----------------------------- store results -----------------------------%
 
-simResults.trajectory.executed.path             = traj_executed;
-simResults.trajectory.executed.nAnchors         = nAnchors_executed;
-simResults.trajectory.executed.distance         = distance_executed;
-simResults.trajectory.executed.initAngle        = initAngle_executed;
-simResults.trajectory.executed.latency          = latency.*planner.dt;
+singleAgentResults.trajectory.executed.path             = traj_executed;
+singleAgentResults.trajectory.executed.nAnchors         = nAnchors_executed;
+singleAgentResults.trajectory.executed.distance         = distance_executed;
+singleAgentResults.trajectory.executed.initAngle        = initAngle_executed;
+singleAgentResults.trajectory.executed.latency          = latency.*planner.dt;
 
-simResults.trajectory.augmented.path            = traj_augmented;
-simResults.trajectory.augmented.nAnchors        = nAnchors_augmented;
-simResults.trajectory.augmented.distance        = distance_augmented;
-simResults.trajectory.augmented.initAngle       = initAngle_augmented;
+singleAgentResults.trajectory.augmented.path            = traj_augmented;
+singleAgentResults.trajectory.augmented.nAnchors        = nAnchors_augmented;
+singleAgentResults.trajectory.augmented.distance        = distance_augmented;
+singleAgentResults.trajectory.augmented.initAngle       = initAngle_augmented;
 
-simResults.trajectory.planned.path              = traj_planned;
-simResults.trajectory.planned.nAnchors          = nAnchors_planned;
-simResults.trajectory.planned.distance          = distance_planned;
-simResults.trajectory.planned.initAngle         = initAngle_planned;
+singleAgentResults.trajectory.planned.path              = traj_planned;
+singleAgentResults.trajectory.planned.nAnchors          = nAnchors_planned;
+singleAgentResults.trajectory.planned.distance          = distance_planned;
+singleAgentResults.trajectory.planned.initAngle         = initAngle_planned;
 
-simResults.trajectory.rewards                   = reward;
-simResults.trajectory.obstacleHits              = obstacleHit;
-simResults.trajectory.boundaryFlag              = boundaryFlag;
+singleAgentResults.trajectory.rewards                   = reward;
+singleAgentResults.trajectory.obstacleHits              = obstacleHit;
+singleAgentResults.trajectory.boundaryFlag              = boundaryFlag;
 
-simResults.belief.target.initialPrior           = uniformTargetPrior;
-simResults.belief.target.likelihoods.executed   = executedTargetLikelihoods;
-simResults.belief.target.likelihoods.augmented  = augmentedTargetLikelihoods;
-simResults.belief.target.likelihoods.planned    = plannedTargetLikelihoods;
-simResults.belief.target.posteriors             = targetPosteriors;
-simResults.belief.target.initialErrormap        = uniformTargetErrormap;
-simResults.belief.target.errormaps              = targetErrormaps;
-simResults.belief.target.outcomeSurprise        = outcomeSurprise;
-simResults.belief.target.rewardProb             = rewardProb;
-simResults.belief.target.posteriorEntropy       = targetPosteriorEntropy;
-simResults.belief.target.resetFlag              = resetFlag;
-simResults.belief.target.cacheFlag              = cacheFlag;
+singleAgentResults.belief.target.initialPrior           = uniformTargetPrior;
+singleAgentResults.belief.target.likelihoods.executed   = executedTargetLikelihoods;
+singleAgentResults.belief.target.likelihoods.augmented  = augmentedTargetLikelihoods;
+singleAgentResults.belief.target.likelihoods.planned    = plannedTargetLikelihoods;
+singleAgentResults.belief.target.posteriors             = targetPosteriors;
+singleAgentResults.belief.target.initialErrormap        = uniformTargetErrormap;
+singleAgentResults.belief.target.errormaps              = targetErrormaps;
+singleAgentResults.belief.target.outcomeSurprise        = outcomeSurprise;
+singleAgentResults.belief.target.rewardProb             = rewardProb;
+singleAgentResults.belief.target.posteriorEntropy       = targetPosteriorEntropy;
+singleAgentResults.belief.target.resetFlag              = resetFlag;
+singleAgentResults.belief.target.cacheFlag              = cacheFlag;
 
-simResults.belief.context.allCaches             = allCaches;
-simResults.belief.context.posteriors            = contextPosteriors;
-simResults.belief.context.toRead                = contextToRead;
-simResults.belief.context.toWrite               = contextToWrite;
-simResults.belief.context.posteriorEntropy      = contextPosteriorEntropy;
+singleAgentResults.belief.context.allCaches             = allCaches;
+singleAgentResults.belief.context.posteriors            = contextPosteriors;
+singleAgentResults.belief.context.toRead                = contextToRead;
+singleAgentResults.belief.context.toWrite               = contextToWrite;
+singleAgentResults.belief.context.posteriorEntropy      = contextPosteriorEntropy;
 
 end

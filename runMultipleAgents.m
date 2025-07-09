@@ -1,11 +1,15 @@
-function multiAgentResults = runMultipleAgents(nAgents,belief,sampler,planner,trial)
+function multiAgentResults = runMultipleAgents(nAgents,agent,trial)
 % RUNMULTIPLEAGENTS Simulates an agent that learns to intercept a target.
 %
-%   multiAgentResults = RUNMULTIPLEAGENTS(nAgents,belief,sampler,planner,trial) 
-%   runs multiple simulated agents in parallel, and stores the results in the 
+%   multiAgentResults = RUNMULTIPLEAGENTS(nAgents,agent,trial) runs
+%   multiple simulated agents in parallel, and stores the results in the 
 %   output structure 'multiAgentResults'.
 
-% initialize arrays
+
+%---------------------- extract agent structures -------------------------%
+belief  = agent.belief;
+
+%-------------------------  initialize arrays ----------------------------%
 [rewardRate,nAnchors,obstHits,boundary,...
     rewardProb,outcomeSurprise,resetFlag,cacheFlag,...
     targetPosteriorEntropy,contextPosteriorEntropy,...
@@ -13,11 +17,10 @@ function multiAgentResults = runMultipleAgents(nAgents,belief,sampler,planner,tr
     contextPosterior,sampledContext,estimatedContext  ] = deal([]);
 
 nTrials = trial.nTrials;
-nBlocks = numel(unique(trial.blockIDs));
 
 for i=1:nAgents
     disp(['running agent ',num2str(i)]);
-    singleAgentResults = runSingleAgent(belief,sampler,planner,trial);
+    singleAgentResults = runSingleAgent(agent,trial);
 
     contextPosteriorTemp = nan(belief.cacheSize,nTrials);
     np = size(singleAgentResults.belief.context.posteriors,2);
