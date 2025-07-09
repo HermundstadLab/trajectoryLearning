@@ -8,11 +8,13 @@ function [arena,belief,sampler,planner,trial,agentParams] = loadExperiment(exptT
 %   the agent's belief, sampler, and planner modules. 
 %
 %   Inputs:
-%       exptType:    'singleTarget', 'multiTarget', 'obstacle'
+%       exptType:    'singleTarget', 'multiTarget', 'obstacle',
+%       'interleaved obstacle', 'new entry'
 %       envType:     'default'
 %       agentType:   'default'
 %   
 %   See also: LOADAGENTPARAMS, LOADENVIRONMENTPARAMS, LOADTRIALPARAMS
+
 
 if nargin<3
     envType   = 'default';
