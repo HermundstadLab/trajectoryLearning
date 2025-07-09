@@ -111,6 +111,9 @@ addParameter(p,'errorThreshold',default_errorThreshold,validateNegative)
 
 parse(p,agentType,varargin{:})
 
+agentParams.relativeWidth         = p.Results.relativeWidth;  
+agentParams.likelihoodSigma       = p.Results.likelihoodSigma;  
+agentParams.likelihoodRange       = p.Results.likelihoodRange;  
 agentParams.memoryDecay           = p.Results.memoryDecay;                
 agentParams.uniformPriorThreshold = p.Results.uniformPriorThreshold;  
 agentParams.surpriseThreshold     = p.Results.surpriseThreshold;
