@@ -57,14 +57,14 @@ trial               = generateTrialStructure(environment,'singleTarget');
 singleAgentResults = runSingleAgent(agent,trial);
 
 trialID = 3;
-plotSchematic_singleTrial(singleAgentResults,environment,agent,trial,trialID,plotParams);
+plotSingleAgentResults_singleTrialEvolution(singleAgentResults,environment,agent,trial,trialID,plotParams);
 
 
 %% simulate many agents, store results, and plot results averaged across agents
 
 nAgents = 5;
 multiAgentResults = runMultipleAgents(nAgents,agent,trial);
-plotResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
+plotMultiAgentResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
 
 
 %% 
@@ -85,13 +85,13 @@ singleAgentResults = runSingleAgent(agent,trial);
 trialID = 2;
 
 % FIG 2E: schematic of trajectory planner 
-plotSchematic_trajectoryPlanning(singleAgentResults,environment,agent,trial,trialID,plotParams);
+plotSchematic_planTrajectory(singleAgentResults,environment,agent,trial,trialID,plotParams);
 
 % FIG 2F: schematic of belief update
-plotSchematic_beliefUpdate(singleAgentResults,environment,agent,trial,trialID,plotParams);
+plotSchematic_updateBelief(singleAgentResults,environment,agent,trial,trialID,plotParams);
 
 % FIG 2G: schematic of anchor sampling
-plotSchematic_anchorSampling(singleAgentResults,arena,belief,sampler,planner,trialID,plotParams);
+plotSchematic_sampleAnchors(singleAgentResults,arena,belief,sampler,planner,trialID,plotParams);
 
 
 %%                      FIGURE 3: SINGLE TARGET                          %%
@@ -104,17 +104,17 @@ trial = generateTrialStructure(environment,'singleTarget');
 % Fig 3A: average learning results for single target 
 nAgents = 200;
 multiAgentResults = runMultipleAgents(nAgents,agent,trial);
-plotResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
+plotMultiAgentResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
 
 % Fig 3B: consolidation of belief over time within a single agent
 singleAgentResults = runSingleAgent(agent,trial);
-plotSchematic_beliefConsolidation(singleAgentResults,environment,agent,trial,plotParams);
+plotSingleAgentResults_targetBeliefEvolution(singleAgentResults,environment,agent,trial,plotParams);
 
 % Fig 3D: immediate generalization to new entrances
 trial = generateTrialStructure(environment,'new entry','nBlocks',4,'nTrialsPerBlock',20);
 singleAgentResults = runSingleAgent(agent,trial);
 trialIDs = [20,40,60,80];
-plotSchematic_trajectories(singleAgentResults,environment,agent,trial,trialIDs,plotParams)
+plotSingleAgentResults_trajectories(singleAgentResults,environment,agent,trial,trialIDs,plotParams)
 
 
 %%                      FIGURE 4: MULTIPLE TARGETS                       %%
@@ -130,7 +130,7 @@ multiAgentResults1 = runMultipleAgents(nAgents,agent1,trial);
 multiAgentResults2 = runMultipleAgents(nAgents,agent2,trial);   
 
 % Fig 4A: compare average performance with and without target switch
-plotResults_surpriseReset(multiAgentResults1,multiAgentResults2,agent,trial,plotParams);
+plotMultiAgentResults_surpriseReset(multiAgentResults1,multiAgentResults2,agent,trial,plotParams);
 
 
 %-------------- run agents on 5 targets with surprise reset --------------%
@@ -139,7 +139,7 @@ trial  = generateTrialStructure(environment,'multiTarget','nBlocks',5);
 multiAgentResults = runMultipleAgents(nAgents,agent2,trial);
 
 % Fig 4B: average performance and speed of learning
-plotResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
+plotMultiAgentResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
 
 
 %%                          FIGURE 5: CACHING                            %%
@@ -151,7 +151,7 @@ trial  = generateTrialStructure(environment,'multiTarget','nBlocks',5);
 
 % Fig 5C-D: angle to first anchor point and context posterior over time
 singleAgentResults = runSingleAgent(agent,trial);
-plotResults_initAnchorAngles(singleAgentResults,trial,plotParams)
+plotSingleAgentResults_contextBeliefEvolution(singleAgentResults,trial,plotParams)
 
 
 %%                     FIGURE 6: OBSTACLE AVOIDANCE                      %%
@@ -170,7 +170,7 @@ trialID = 10;
 plotSchematic_augmentAnchors(singleAgentResults,environment,agent,trial,trialID,plotParams)
 
 % Fig 6C: illustrate co-evolution of belief and errormap
-plotSchematic_beliefConsolidation(singleAgentResults,environment,agent,trial,plotParams)
+plotSingleAgentResults_targetBeliefEvolution(singleAgentResults,environment,agent,trial,plotParams)
 
 
 %------ run multiple agents obstacle, plot trial-averaged results --------%
@@ -178,20 +178,11 @@ nAgents = 5;
 multiAgentResults = runMultipleAgents(nAgents,agent,trial);
 
 % Fig 6D: average performance when obstacle introduced from first trial
-plotResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
+plotMultiAgentResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
 
 % Fig 6E: average performance when obstacle introduced after learning
 trial  = generateTrialStructure(environment,'interleaved obstacle');
 multiAgentResults = runMultipleAgents(nAgents,agent,trial);
 
-plotResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
+plotMultiAgentResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
 
-
-%%                SI FIGURE 1: SURPRISE RESET                            %%
-%---meaure peak surprise after target switch for different parameters ----%
-
-% to run from scratch (reset parameters between each run):
-% nAgents = 200;
-% multiAgentResults = runMultipleAgents(nAgents,belief,sampler,planner,trial);   
-
-[arena,belief,sampler,planner,trial,agentParams] = loadExperiment('new entry');
