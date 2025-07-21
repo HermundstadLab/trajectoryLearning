@@ -21,7 +21,8 @@ if numel(boundaryAnchorFlag)>1 & mean(boundaryAnchorFlag)>0.5
 
     newAnchors = updateAnchorOrder(boundaryAnchors,boundaryAnchorFlag,planner);
     trajectory = planTrajectory(newAnchors,0,planner,1);
-
+    anchorIDsOrdered = 1:numel(newAnchors);
+   
 % otherwise, execute normal run
 else
 
