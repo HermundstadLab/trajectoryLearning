@@ -185,14 +185,14 @@ while numel(obstacleVec)>0 && obstacleVec(1)>0
         % generate boundary trajectory
         [boundaryTrajectory,boundaryInds] = generateBoundaryTrajectory(boundarySegment1,nextAnchor,boundaryInds,planner);
 
-       % add boundary trajectory to existing trajectory
+        % add boundary trajectory to existing trajectory
         executedTrajectory = expandTrajectory(executedTrajectory,boundaryTrajectory,trajFields);
-
+        
         % generate open field trajectory to next anchor point
         openFieldTrajectory = generateOpenFieldTrajectory(originalTrajectory,boundarySegment2,nextAnchor,trajectoryInds,planner);
 
         % add open field trajectory to existing trajectory
-        executedTrajectory = expandTrajectory(executedTrajectory,openFieldTrajectory,trajFields);
+        executedTrajectory = expandTrajectory(executedTrajectory,openFieldTrajectory,trajFields);       
 
         % trim original trajectory
         trajectoryInds.OpenField = trajectoryInds.boundaryExit+1:trajectoryInds.nextAnchor;
@@ -412,6 +412,9 @@ end
 end
 
 function [traj1,traj2] = splitTrajectory(traj,trajFields,indSplit,indEnd)
+if indSplit==indEnd
+    indSplit = max(1,indSplit-1);
+end
 for i=1:numel(trajFields)
     traj1.(trajFields{i}) = traj.(trajFields{i})(1:indSplit);
     traj2.(trajFields{i}) = traj.(trajFields{i})(indSplit+1:indEnd);
