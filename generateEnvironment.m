@@ -191,6 +191,8 @@ environment.target.height   = targetHeight;
 environment.obstacle.width  = obstacleWidth;
 environment.obstacle.height = obstacleHeight;
 
+environment.params = p.Results;
+
 %-------------------- define boundaries of belief ------------------------%
 
 agent.belief.size           = arenaSizePolar;
