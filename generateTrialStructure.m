@@ -2,7 +2,7 @@ function trial = generateTrialStructure(environment,exptType,varargin)
 % GENERATETRIALSTRUCTURE Generate a structure that specifies the current
 % trial configuration.
 %
-%   trial = GENERATETRIALSTRUCTURE(environment,exptType,varargin) takes 
+%   trial = GENERATETRIALSTRUCTURE(environment,exptType,varargin) takes
 %   as inputs a structure that specifies the environment ('environment'), 
 %   and a string that specifies the experimental protocol. Variable input 
 %   arguments can be used to override default parameter settings.
@@ -386,6 +386,7 @@ for i=1:numel(xcTarget)
     end
 end
             
+trial.params = p.Results;
 
 end
 

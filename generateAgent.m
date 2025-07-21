@@ -17,7 +17,6 @@ function agent = generateAgent(agent,agentType,varargin)
 %   'agentType'                     type of environment to generate ('default')
 %
 %   VARIABLE INPUTS:  
-%   'relativeWidth':                width of agent, relative to arena (a.u.)
 %   'likelihoodRange':              max range of likelihood (btw 0 and 1)  
 %   'likelihoodSigma':              SD of gaussian likelihood, expressed as percentage of belief space (n.u.) 
 %   'memoryDecay':                  rate of memory decay (measured as weighting to apply to uniform prior)
@@ -45,52 +44,62 @@ function agent = generateAgent(agent,agentType,varargin)
 
 p = inputParser;
 
+%------------ all beliefs ------------%
+default_uniformPriorThreshold = 0.001;                  % threshold for detecting uniform prior (measured as the fraction DKL(prior||uniform)/DKL(delta||uniform) )
+
+%----------- target belief -----------%
+default_likelihoodRange       = 0.9;                    % max range of likelihood (btw 0 and 1)    
+default_likelihoodSigma       = 0.075;                  % SD of gaussian likelihood, expressed as percentage of belief space (n.u.) 
+
+default_resetFlag             = true;                   % determines whether to reset belief
+                                                        % options: true/false
+default_resetWindow           = 2;                      % number of successive timepoints for which surprise signal must exceed threshold
+
+%---------- context belief -----------%
+default_cacheFlag             = true;                   % determines whether agent can cache current belief
+                                                        % options: true/false 
+default_cacheSize             = 5;                      % maximum number of allowed items in cache (including working belief)                                                         
+default_cacheSamplingMethod   = 'prop';                 % method to use to sample context from cache:
+                                                        % options: 'MAP' (maximum a posteriori)
+                                                        %          'prop' (proportional sampling)
+                                                        %          'avg' (posterior average)                             
+   
+%------------- sampler ---------------%
+default_anchorOrderMethod     = 'TSP';                  % type of ordering to use for anchor points; 
+                                                        % options: 'TSP' (solves approx traveling salesman)
+                                                        %          'angle' (sorts anchors based on angle)
+default_anchorTolMerge        = 0.05;                   % tolerance for merging anchors (n.u.)
+default_anchorTolShift        = 0.005;                  % tolerance for shifting anchors (n.u.)    
+default_anchorInit            = 8;                      % initial number of anchors
+default_anchorTolScaling      = true;                   % determines whether to scale tolerances around individual anchors 
+                                                        % options: true (scale tolerances based on width of posterior peaks)
+                                                        %          false (used fixed tolerance for all anchors       
+%------------- error map -------------%
+default_errorThreshold        = -0.05;                  % error threshold for augmenting anchors points                                                        
+
+%--------- trajectory planner --------%                                                        
+default_nOptima               = 5;                      % number of optimzations to perform for initial heading
+default_timeInterp            = 100;                    % number of timepoints to use to interpolate trajectories
+default_spaceInterp           = 0.25;                   % number of spatial points to interpolate trajectories around obstacles
+                                                        %   (expressed as percentage of belief space per unit distance)
+
 if strcmp(agentType,'default')
 
-    default_relativeWidth         = 0.05;                   % width of agent, relative to arena (a.u.)
-    default_likelihoodRange       = 0.9;                    % max range of likelihood (btw 0 and 1)    
-    default_likelihoodSigma       = 0.075;                  % SD of gaussian likelihood, expressed as percentage of belief space (n.u.) 
-    
-    default_memoryDecay           = 0.01;                   % rate of memory decay (measured as weighting to apply to uniform prior)
-    default_uniformPriorThreshold = 0.001;                  % threshold for detecting uniform prior (measured as the fraction DKL(prior||uniform)/DKL(delta||uniform) )
-    default_surpriseThreshold     = 5;                      % threshold for caching posterior (outcome is 10x more surprising under current prior compared to uniform prior)
-    default_resetWindow           = 2;                      % number of successive timepoints for which surprise signal must exceed threshold
-    default_resetFlag             = true;                   % determines whether to reset belief
-                                                            % options: true/false
+    default_memoryDecay           = 0;                  % rate of memory decay (measured as weighting to apply to uniform prior)
+    default_surpriseThreshold     = 10;                 % threshold for caching posterior (outcome is 10x more surprising under current prior compared to uniform prior)
+    default_anchorSamplingNoise   = 0;                  % noise in sampling anchors (n.u.) 
+                                                        %   (should be ~less than the ratio of the target width to arena width)
 
-    default_cacheSamplingMethod   = 'prop';                 % method to use to sample context from cache:
-                                                            % options: 'MAP' (maximum a posteriori)
-                                                            %          'prop' (proportional sampling)
-                                                            %          'avg' (posterior average)
-    default_cacheSize             = 5;                      % maximum number of allowed items in cache (including working belief)                              
-    default_cacheFlag             = false;                  % determines whether agent can cache current belief
-                                                            % options: true/false                                                      
+elseif strcmp(agentType,'lossy') 
 
-    default_anchorTolMerge        = 0.05;                   % tolerance for merging anchors (n.u.)
-    default_anchorTolShift        = 0.005;                  % tolerance for shifting anchors (n.u.)    
-    default_anchorSamplingNoise   = 0.01;                   % noise in sampling anchors (n.u.) 
-                                                            %   (should be ~less than the ratio of the target width to arena width)
-    default_anchorInit            = 10;                     % initial number of anchors
-    default_anchorTolScaling      = true;                   % determines whether to scale tolerances around individual anchors 
-                                                            % options: true (scale tolerances based on width of posterior peaks)
-                                                            %          false (used fixed tolerance for all anchors)
-    default_anchorOrderMethod     = 'TSP';                  % type of ordering to use for anchor points; 
-                                                            % options: 'TSP' (solves approx traveling salesman)
-                                                            %          'angle' (sorts anchors based on angle)
+    default_memoryDecay           = 0.01;               % rate of memory decay (measured as weighting to apply to uniform prior)
+    default_surpriseThreshold     = 5;                  % threshold for caching posterior (outcome is 5x more surprising under current prior compared to uniform prior)
+    default_anchorSamplingNoise   = 0.01;               % noise in sampling anchors (n.u.) 
+                                                        %   (should be ~less than the ratio of the target width to arena width)
 
-    default_errorThreshold        = -0.05;                  % error threshold for augmenting anchors points
-    
-    default_timeInterp            = 100;                    % number of timepoints to use to interpolate trajectories
-    default_spaceInterp           = 0.25;                   % number of spatial points to interpolate trajectories around obstacles
-                                                            %   (expressed as percentage of belief space per unit distance)
-
-    default_nOptima               = 5;                      % number of optimzations to perform for initial heading
-
-%elseif strcmp(agentType,'new agent type')                  % uncomment to add new agent types
 else
     error('unrecognized agent type')
 end
-
 
 
 validAgentTypes = {'default'};
@@ -125,7 +134,6 @@ addParameter(p,'anchorInit',default_anchorInit,validateInteger)
 addParameter(p,'nOptima',default_nOptima,validateInteger)
 addParameter(p,'timeInterp',default_timeInterp,validateInteger)
 
-addParameter(p,'relativeWidth',default_relativeWidth,validateLessThanOne)
 addParameter(p,'likelihoodRange',default_likelihoodRange,validateLessThanOne)
 
 addParameter(p,'likelihoodSigma',default_likelihoodSigma,validateNumeric)
@@ -136,7 +144,6 @@ addParameter(p,'anchorTolMerge',default_anchorTolMerge,validateNumeric)
 addParameter(p,'anchorTolShift',default_anchorTolShift,validateNumeric)
 addParameter(p,'anchorSamplingNoise',default_anchorSamplingNoise,validateNumeric)
 addParameter(p,'spaceInterp',default_spaceInterp,validateNumeric)
-
 
 addParameter(p,'errorThreshold',default_errorThreshold,validateNegative)
 
@@ -188,7 +195,9 @@ agent.planner.thTol_shift    = p.Results.anchorTolShift*agent.belief.size(1);
 agent.planner.rTol_shift     = p.Results.anchorTolShift*agent.belief.size(2);   
 agent.planner.scaleTol       = p.Results.anchorTolScaling;                      
 agent.planner.orderType      = p.Results.anchorOrderMethod;                     
-agent.planner.nOptima        = p.Results.nOptima;                              
+agent.planner.nOptima        = p.Results.nOptima;       
+
+agent.params = p.Results;
 
 end
 
