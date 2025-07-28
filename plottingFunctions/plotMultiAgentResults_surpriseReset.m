@@ -19,7 +19,7 @@ end
 yyaxis right
 for i=1:nBlocks
     inds = blockSwitches(i):blockSwitches(i+1)-1;
-    plotTrialAverages(inds,multiAgentResults1.belief.target.rewardProb(inds,:),plotParams,'r','--','predicted rate');
+    plotTrialAverages(inds,multiAgentResults1.belief.target.rewardProb(inds,:),plotParams,'r','--','predicted rate',0);
 end
 plotTswitch(blockIDs,tBlock,[0,1])
 ylim([0,1])
@@ -29,13 +29,13 @@ subplot(3,2,3);
 yyaxis left
 for i=1:nBlocks
     inds = blockSwitches(i):blockSwitches(i+1)-1;
-    plotTrialAverages(inds,multiAgentResults1.belief.target.posteriorEntropy(inds,:)./multiAgentResults1.belief.target.posteriorEntropyFlat,plotParams,'k','-','uncertainty (bits)');
+    plotTrialAverages(inds,multiAgentResults1.belief.target.posteriorEntropy(inds,:)./multiAgentResults1.belief.target.posteriorEntropyFlat,plotParams,'k','-','uncertainty (bits)',0);
 end
 plotTswitch(blockIDs,tBlock,[0,1])
 yyaxis right
 for i=1:nBlocks
     inds = blockSwitches(i):blockSwitches(i+1)-1;
-    plotTrialAverages(inds,multiAgentResults1.belief.target.outcomeSurprise(inds,:),plotParams,'r','--','surprise (bits)');
+    plotTrialAverages(inds,multiAgentResults1.belief.target.outcomeSurprise(inds,:),plotParams,'r','--','surprise (bits)',0);
 end
 plot([0,nTrials],[agent.belief.surpriseThreshold,agent.belief.surpriseThreshold],'--k')
 xlim([0,nBlocks.*tBlock])

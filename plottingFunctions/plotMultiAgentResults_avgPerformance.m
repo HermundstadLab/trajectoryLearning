@@ -57,10 +57,10 @@ hold on;plotTswitch(blockIDs,tBlock,[0,1])
 yyaxis right
 for i=1:nBlocks
     inds = blockSwitches(i):blockSwitches(i+1)-1;
-    plotTrialAverages(inds,multiAgentResults.belief.target.rewardProb(inds,:),plotParams,cmap(i,:),'--','pred reward');
+    plotTrialAverages(inds,multiAgentResults.belief.target.rewardProb(inds,:),plotParams,cmap(i,:),'--','pred reward',0);
 end
 % plot uncertainty and surprise
-fCache = sum(multiAgentResults.belief.target.cacheFlag,2)./nAgents;
+fCache = sum(multiAgentResults.belief.target.resetFlag,2)./nAgents;
 ii = find(fCache>0);
 
 subplot(3,2,3);
@@ -68,13 +68,13 @@ yyaxis left
 for i=1:nBlocks
     inds = blockSwitches(i):blockSwitches(i+1)-1;
     plotTrialAverages(inds,multiAgentResults.belief.target.posteriorEntropy(inds,:)./...
-        multiAgentResults.belief.target.posteriorEntropyFlat,plotParams,cmap(i,:),'-','uncertainty');
+        multiAgentResults.belief.target.posteriorEntropyFlat,plotParams,cmap(i,:),'-','uncertainty',0);
 end
 %plot([1,nTrials],[multiAgentResults.belief.target.posteriorEntropyFlat,multiAgentResults.belief.target.posteriorEntropyFlat],'--k');
 yyaxis right
 for i=1:nBlocks
     inds = blockSwitches(i):blockSwitches(i+1)-1;
-    plotTrialAverages(inds,multiAgentResults.belief.target.outcomeSurprise(inds,:),plotParams,cmap(i,:),'--','surprise');
+    plotTrialAverages(inds,multiAgentResults.belief.target.outcomeSurprise(inds,:),plotParams,cmap(i,:),'--','surprise',0);
 end
 plot([1,nTrials],[belief.surpriseThreshold,belief.surpriseThreshold],'--k')
 plotTswitch(blockIDs,tBlock,[0,2])
@@ -86,14 +86,14 @@ subplot(3,2,5);
 yyaxis left
 for i=1:nBlocks
     inds = blockSwitches(i):blockSwitches(i+1)-1;
-    plotTrialAverages(inds,multiAgentResults.trajectory.nAnchors(inds,:)-2,plotParams,cmap(i,:),'-','no. anchors');
+    plotTrialAverages(inds,multiAgentResults.trajectory.nAnchors(inds,:)-2,plotParams,cmap(i,:),'-','no. anchors',0);
 end
 plot([1,nTrials],[1,1],'--k');
 plotTswitch(blockIDs,tBlock,[0,10])
 yyaxis right
 for i=1:nBlocks
     inds = blockSwitches(i):blockSwitches(i+1)-1;
-    plotTrialAverages(inds,multiAgentResults.trajectory.distance(inds,:),plotParams,cmap(i,:),'--','path length');
+    plotTrialAverages(inds,multiAgentResults.trajectory.distance(inds,:),plotParams,cmap(i,:),'--','path length',0);
 end
 
 % plot initial and final anchor points
@@ -132,6 +132,7 @@ for i=1:nBlocks
     plot([i,i],learningSpeed(2:3,i),'color',cmap(i,:),'linewidth',plotParams.lw); hold on;
     plot(i,learningSpeed(1,i),'o','MarkerFaceColor',cmap(i,:),'MarkerEdgeColor','none','markersize',plotParams.ms)
 end
+plot([0,nBlocks+1],[mean(learningSpeed(1,:)),mean(learningSpeed(1,:))],'--k')
 xlim([0,nBlocks+1])
 ylim([0,100])
 xlabel('target number')
