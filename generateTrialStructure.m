@@ -14,8 +14,8 @@ function trial = generateTrialStructure(environment,exptType,varargin)
 %   'environment'         structure that specifies properties of the
 %                             environment
 %   'exptType'            type of experiment to run ('singleTarget',
-%                             'multiTarget', 'obstacle', 'interleaved 
-%                             obstacle', 'new entry')
+%                             'multiTarget', 'obstacle', 'targetSwitch',
+%                             'interleavedObstacle', 'newEntry')
 %
 %   VARIABLE INPUTS:
 %   'nBlocks':            number of blocks of trials 
@@ -40,6 +40,7 @@ if strcmp(exptType,'multiTarget')
     default_nBlocks             = 5;
     default_nTrialsPerBlock     = 100;
     default_targetArrangement   = 'radial';
+    default_targetIDs           = 1:default_nBlocks;
     default_obstacleTrials      = zeros(1,default_nBlocks);
     default_entryWall           = zeros(1,default_nBlocks);
 
@@ -47,6 +48,16 @@ elseif strcmp(exptType,'singleTarget')
     default_nBlocks             = 1;
     default_nTrialsPerBlock     = 100;
     default_targetArrangement   = 'radial';
+    default_targetIDs           = 1:default_nBlocks;
+    default_obstacleTrials      = zeros(1,default_nBlocks);
+    default_entryWall           = zeros(1,default_nBlocks);
+
+elseif strcmp(exptType,'targetSwitch')
+    default_nBlocks             = 10;
+    default_nTrialsPerBlock     = 100;
+    default_targetArrangement   = 'radial';
+    default_targetIDs           = 2*ones(1,default_nBlocks);
+    default_targetIDs(1)        = 1;
     default_obstacleTrials      = zeros(1,default_nBlocks);
     default_entryWall           = zeros(1,default_nBlocks);
 
@@ -54,21 +65,24 @@ elseif strcmp(exptType,'obstacle')
     default_nBlocks             = 1;
     default_nTrialsPerBlock     = 100;
     default_targetArrangement   = 'radial';
-    default_obstacleTrials      = ones(1,default_nBlocks);
+    default_targetIDs           = 1:default_nBlocks;
+    default_obstacleTrials      = ones( 1,default_nBlocks);
     default_entryWall           = zeros(1,default_nBlocks);
 
-elseif strcmp(exptType,'interleaved obstacle')
+elseif strcmp(exptType,'interleavedObstacle')
     default_nBlocks             = 3;
     default_nTrialsPerBlock     = 100;
-    default_targetArrangement   = 'centered';
+    default_targetArrangement   = 'radial';
+    default_targetIDs           = ones( 1,default_nBlocks);
     default_obstacleTrials      = zeros(1,default_nBlocks);
     default_obstacleTrials(2)   = 1;
     default_entryWall           = zeros(1,default_nBlocks);
 
-elseif strcmp(exptType,'new entry')
+elseif strcmp(exptType,'newEntry')
     default_nBlocks             = 4;
     default_nTrialsPerBlock     = 20;
-    default_targetArrangement   = 'centered';
+    default_targetArrangement   = 'radial';
+    default_targetIDs           = ones( 1,default_nBlocks);
     default_obstacleTrials      = zeros(1,default_nBlocks);
     default_entryWall           = zeros(1,default_nBlocks);
     default_entryWall(2:4)      = [1,2,3];
@@ -77,7 +91,7 @@ else
     error('unrecognized experiment type')
 end
 
-validExptTypes = {'new entry','interleaved obstacle','obstacle','singleTarget','multiTarget'};
+validExptTypes = {'newEntry','interleavedObstacle','obstacle','singleTarget','multiTarget','targetSwitch'};
 checkExptTypes = @(x) any(validatestring(x,validExptTypes));
 
 validTargetArrangements = {'centered','radial','random'};
@@ -94,6 +108,7 @@ addOptional( p,'targetArrangement',default_targetArrangement,checkTargetArrangem
 
 addParameter(p,'nBlocks',default_nBlocks,validateInteger)
 addParameter(p,'nTrialsPerBlock',default_nTrialsPerBlock,validateInteger)
+addParameter(p,'targetIDs',default_targetIDs,validateNumeric)
 addParameter(p,'obstacleTrials',default_obstacleTrials,validateNumeric)
 addParameter(p,'entryWall',default_entryWall,validateNumeric)
 
@@ -102,6 +117,7 @@ trialParams.exptType            = p.Results.exptType;
 trialParams.nBlocks             = p.Results.nBlocks;
 trialParams.nTrialsPerBlock     = p.Results.nTrialsPerBlock;
 trialParams.targetArrangement   = p.Results.targetArrangement;
+trialParams.targetIDs           = p.Results.targetIDs;
 trialParams.obstacleTrials      = p.Results.obstacleTrials;
 trialParams.entryWall           = p.Results.entryWall;
 
@@ -135,25 +151,27 @@ obstacle = environment.obstacle;
 
 %---------------------- target arrangement -------------------------------%
 
+nTargets = numel(unique(trialParams.targetIDs));
 if strcmp(trialParams.targetArrangement,'radial')
     % define N targets arranged radially around home port
-    thcTarget = linspace(0,pi,trialParams.nBlocks+4);                   % define targets on semi-circle
-    thcTarget([1,2,trialParams.nBlocks+3,trialParams.nBlocks+4])=[];    % remove edges
-    [~,isort] = sort(abs(thcTarget-pi/2),'descend');                    % sort so that targets begin at center 
-    thcTarget = thcTarget([isort(end),isort(1:end-1)]);                 %   and alternate around center
+    thc = linspace(0,pi,nTargets+4);                                    % define targets on semi-circle
+    thc([1,2,nTargets+3,nTargets+4])=[];                                % remove edges
+    [~,isort] = sort(abs(thc-pi/2),'descend');                          % sort so that targets begin at center 
+    thc = thc([isort(end),isort(1:end-1)]);                             %   and alternate around center
 
-    rcTarget  = arena.size(2)/2.*ones(1,trialParams.nBlocks);           % radial distance to target centers
-    [xcTarget,ycTarget] = pol2cart(thcTarget,rcTarget);                 % x,y coordinates of target centers 
+    rc  = arena.size(2)/2.*ones(1,nTargets);                            % radial distance to target centers
+    [xc,yc] = pol2cart(thc,rc);                                         % x,y coordinates of target centers 
 
 elseif strcmp(trialParams.targetArrangement,'random')
     % define N targets arranged randomly around home port
     xcTarget = randu(arena.xMin,arena.xMax,trialParams.nBlocks);        % x coords of target centers
     ycTarget = randu(arena.yMin,arena.yMax,trialParams.nBlocks);        % y coords of target centers
 
-elseif strcmp(trialParams.targetArrangement,'centered')
-    % define N targets centered above home port
-    xcTarget = zeros(1,trialParams.nBlocks);                            % x coords of target centers
-    ycTarget = arena.size(2)/2.*ones(1,trialParams.nBlocks);            % y coords of target centers
+end
+
+for i=1:numel(trialParams.targetIDs)
+    xcTarget(i) = xc(trialParams.targetIDs(i));
+    ycTarget(i) = yc(trialParams.targetIDs(i));
 end
 
 %-------------------- obstacle arrangement -------------------------------%
