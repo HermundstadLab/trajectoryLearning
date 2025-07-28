@@ -18,7 +18,7 @@ belief  = agent.belief;
 
 nTrials = trial.nTrials;
 
-for i=1:nAgents
+parfor i=1:nAgents
     disp(['running agent ',num2str(i)]);
     singleAgentResults = runSingleAgent(agent,trial);
 
@@ -60,6 +60,15 @@ for i=1:nAgents
     end
 end
 
+% reformat posteriors
+p = contextPosterior;
+reshapedPosterior = [];
+for i=1:nAgents
+    reshapedPosterior = cat(3,reshapedPosterior,p(:,1:nTrials));
+    p(:,1:nTrials) = [];
+end
+
+
 multiAgentResults.nAgents = nAgents;
 
 multiAgentResults.trialProtocol = trial;
@@ -91,7 +100,7 @@ multiAgentResults.belief.target.resetFlag         = resetFlag;
 multiAgentResults.belief.target.cacheFlag         = cacheFlag;
 multiAgentResults.belief.target.posteriorEntropy  = targetPosteriorEntropy;
 
-multiAgentResults.belief.context.posteriors       = reshape(contextPosterior,[nTrials,belief.cacheSize,nAgents]);
+multiAgentResults.belief.context.posteriors       = reshapedPosterior;
 multiAgentResults.belief.context.estimated        = estimatedContext;
 multiAgentResults.belief.context.sampled          = sampledContext;
 multiAgentResults.belief.context.posteriorEntropy = contextPosteriorEntropy;
