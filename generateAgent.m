@@ -102,7 +102,7 @@ else
 end
 
 
-validAgentTypes = {'default'};
+validAgentTypes = {'default','lossy'};
 checkAgentTypes = @(x) any(validatestring(x,validAgentTypes));
 
 validCacheSamplings = {'prop','MAP','avg'};
