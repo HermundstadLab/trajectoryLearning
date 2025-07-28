@@ -38,7 +38,8 @@
 %% load auxiliary and plotting functions
 
 addpath("auxiliaryFunctions/","auxiliaryFunctions/peaks2/",...
-    "plottingFunctions/","sims/","plottingFunctions/aux/");
+    "plottingFunctions/","sims/","plottingFunctions/aux/",...
+    "parameterSweeps/");
 
 
 %% load plotting parameters
@@ -186,3 +187,6 @@ multiAgentResults = runMultipleAgents(nAgents,agent,trial);
 
 plotMultiAgentResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
 
+
+%%                  SI FIG: MEMORY DECAY AND PEAK SURPRISE               %%
+sweepOutcomeSurprise(environment,agent);
