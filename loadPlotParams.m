@@ -22,7 +22,7 @@ if strcmp(plotType,'whiteBG')
     plotParams.ms = 12;                         % marker size
     plotParams.fs = 16;                         % font size
     plotParams.lw = 2;                          % linewidth
-    plotParams.windowSize = 4;                  % window used for averaging single-trial data
+    plotParams.windowSize = 7;                  % window used for averaging single-trial data
 
 elseif strcmp(plotType,'blackBG')  
     plotParams.cFig      = [ 0, 0, 0];          % figure color
@@ -40,7 +40,7 @@ elseif strcmp(plotType,'blackBG')
     plotParams.ms = 12;                         % marker size
     plotParams.fs = 16;                         % font size
     plotParams.lw = 2;                          % linewidth
-    plotParams.windowSize = 4;                  % window used for averaging single-trial data
+    plotParams.windowSize = 7;                  % window used for averaging single-trial data
 else
     error('unrecognized plot type');
 end
