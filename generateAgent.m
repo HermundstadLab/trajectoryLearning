@@ -112,7 +112,7 @@ validAnchorOrderings = {'TSP','angle'};
 checkAnchorOrderings = @(x) any(validatestring(x,validAnchorOrderings));
 
 validateLogical     = @(x) islogical(x);
-validateNegative    = @(x) isnumeric(x) && isscalar(x) && (x > 0);
+validateNegative    = @(x) isnumeric(x) && isscalar(x) && (x < 0);
 validateNumeric     = @(x) isnumeric(x) && isscalar(x);
 validateInteger     = @(x) floor(x)==x;
 validateLessThanOne = @(x) x>=0 && x<=1;
