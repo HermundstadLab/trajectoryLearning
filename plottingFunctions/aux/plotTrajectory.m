@@ -42,6 +42,17 @@ if strcmp(coordFrame,'cart')
     daspect([1,1,1])
     axis off
 
+elseif strcmp(coordFrame,'cartScatter')
+    vmax = max(trajectory.velocity);
+    % plot trajectory, target, and obstacle (if applicable)
+    fill(arena.xBoundary,arena.yBoundary,plotParams.cArena,'linestyle','none');hold on;
+    scatter(trajectory.xCoords,trajectory.yCoords,20,trajectory.velocity,'filled');
+    colormap(plasma);clim([.2*vmax,1.1*vmax]);
+    
+    
+    daspect([1,1,1])
+    axis off
+
 elseif strcmp(coordFrame,'polar')
 
     % for plotting purposes, trim values outside of arena bounds (this can 

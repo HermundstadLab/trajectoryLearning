@@ -49,6 +49,17 @@ if strcmp(coordFrame,'cart')
     daspect([1,1,1])
     axis off
 
+elseif strcmp(coordFrame,'cartScatter')
+   
+    % plot optimized anchor points
+    [xCoords,yCoords] = pol2cart(trajectory.anchors.thCoords,trajectory.anchors.rCoords);
+    scatter(xCoords,yCoords,50,'k','filled')
+
+    xlim(arena.xBounds)
+    ylim(arena.yBounds)
+    daspect([1,1,1])
+    axis off
+    
 elseif strcmp(coordFrame,'polar')    
 
     DKL = computeKLdiv(normalizeMap(prior),belief.uniformTargetPrior);
