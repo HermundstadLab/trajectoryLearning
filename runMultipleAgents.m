@@ -52,11 +52,13 @@ parfor i=1:nAgents
     [xxF,yyF] = pol2cart(singleAgentResults.trajectory.executed.path{nTrials}.anchors.thCoords,singleAgentResults.trajectory.executed.path{nTrials}.anchors.rCoords);
     n0 = singleAgentResults.trajectory.executed.path{   1   }.anchors.N;
     nF = singleAgentResults.trajectory.executed.path{nTrials}.anchors.N;
+    aug0 = singleAgentResults.trajectory.executed.path{   1   }.anchors.augmented;
+    augF = singleAgentResults.trajectory.executed.path{nTrials}.anchors.augmented;
 
-    initAnchorLocs = [initAnchorLocs,    [xx0(2:end-1);yy0(2:end-1);repmat(n0-2,[1,n0-2]);repmat(i,[1,n0-2]) ] ];
+    initAnchorLocs = [initAnchorLocs,    [xx0(2:end-1);yy0(2:end-1);repmat(n0-2,[1,n0-2]);repmat(i,[1,n0-2]) ;aug0(2:end-1)] ];
     if ~singleAgentResults.trajectory.executed.path{nTrials}.boundaryFlag
         finalAnchorLocs = [finalAnchorLocs,    [xxF(2:end-1);yyF(2:end-1);repmat(nF-2,[1,nF-2]);repmat(i,[1,nF-2]);...
-            repmat(mean(singleAgentResults.trajectory.rewards(ceil(nTrials/2)+1:nTrials)),[1,nF-2])] ];
+            repmat(mean(singleAgentResults.trajectory.rewards(ceil(nTrials/2)+1:nTrials)),[1,nF-2]);augF(2:end-1)] ];
     end
 end
 
@@ -86,12 +88,14 @@ multiAgentResults.trajectory.initialAnchors.xCoords    = initAnchorLocs(1,:);
 multiAgentResults.trajectory.initialAnchors.yCoords    = initAnchorLocs(2,:);
 multiAgentResults.trajectory.initialAnchors.N          = initAnchorLocs(3,:);
 multiAgentResults.trajectory.initialAnchors.agentIndex = initAnchorLocs(4,:);
+multiAgentResults.trajectory.initialAnchors.augmented  = initAnchorLocs(5,:);
 
 multiAgentResults.trajectory.finalAnchors.xCoords      = finalAnchorLocs(1,:);
 multiAgentResults.trajectory.finalAnchors.yCoords      = finalAnchorLocs(2,:);
 multiAgentResults.trajectory.finalAnchors.N            = finalAnchorLocs(3,:);
 multiAgentResults.trajectory.finalAnchors.agentIndex   = finalAnchorLocs(4,:);
 multiAgentResults.trajectory.finalAnchors.avgReward    = finalAnchorLocs(5,:);
+multiAgentResults.trajectory.finalAnchors.augmented    = finalAnchorLocs(6,:);
 
 % store belief properties
 multiAgentResults.belief.target.rewardProb        = rewardProb;
