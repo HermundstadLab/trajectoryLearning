@@ -156,10 +156,10 @@ if strcmp(trialParams.targetArrangement,'radial')
     % define N targets arranged radially around home port
     thc = linspace(0,pi,nTargets+4);                                    % define targets on semi-circle
     thc([1,2,nTargets+3,nTargets+4])=[];                                % remove edges
-    [~,isort] = sort(abs(thc-pi/2),'descend');                          % sort so that targets begin at center 
+    [~,isort] = sort(abs(thc-pi/2+eps),'descend');                          % sort so that targets begin at center 
     thc = thc([isort(end),isort(1:end-1)]);                             %   and alternate around center
 
-    rc  = arena.size(2)/2.*ones(1,nTargets);                            % radial distance to target centers
+    rc  = arena.size(2)/2.*ones(1,nTargets);                            % radial distance to target centers                                                   
     [xc,yc] = pol2cart(thc,rc);                                         % x,y coordinates of target centers 
 
 elseif strcmp(trialParams.targetArrangement,'random')
