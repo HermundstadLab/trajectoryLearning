@@ -1,7 +1,14 @@
-function plotSchematic_sampleAnchors(res,arena,belief,sampler,planner,trialID,plotParams)
+function plotSchematic_sampleAnchors(res,environment,agent,trialID,plotParams)
+
+%---------------------- extract agent structures -------------------------%
+belief  = agent.belief;
+sampler = agent.sampler;
+planner = agent.planner;
+
+arena   = environment.arena;
 
 %---------------- extract belief for individual trials -------------------%
-priors = cat(3,res.belief.prior,res.belief.posteriors(:,:,1:end-1));
+priors = cat(3,res.belief.target.initialPrior,res.belief.target.posteriors(:,:,1:end-1));
 prior  = squeeze(priors(:,:,trialID));
 
 %----------------------------- plot results ------------------------------%
@@ -11,7 +18,7 @@ set(gcf,'color','w','units','normalized','Position',[.025,.025,.25,.7])
 % plot prior belief
 subplot(4,1,[1,2]);
 plotBelief(prior,belief,plotParams,'prior');hold on;
-[~,peaks] = plotAnchors([],arena,belief,sampler,planner,plotParams,'polar',true,prior);
+[~,peaks] = plotAnchors([],arena,belief,sampler,planner,plotParams,'polar',true,prior,0.5);
 
 % plot probability associate with each anchor point
 subplot(4,1,3);hold on;
