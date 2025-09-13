@@ -1,22 +1,25 @@
-function [targetPosterior,contextPosterior,contextToWrite,cache,resetFlag,cacheFlag] = updateBelief(targetPrior,targetLikelihood,outcome,contextPrior,contextToWrite,cache,surprise,belief)
+function [targetPosterior,contextPosterior,contextToWrite,cache,resetFlag,cacheFlag] = updateBelief(targetPrior,targetLikelihood,outcome,contextPrior,contextToWrite,cache,surprise,obstacleHit,belief)
 % UPDATEBELIEF Updates Bayesian belief.
 %   [posterior,contextPosterior,contextIDs,cache,resetFlag,cacheFlag] = 
-%       UPDATEBELIEF(prior,likelihood,outcome,contextPrior,contextIDs,cache,surprise,belief) 
+%       UPDATEBELIEF(prior,likelihood,outcome,contextPrior,contextIDs,
+%          cache,surprise,obstacleHit,belief) 
 %   uses the prior belief about the target vector, together with the 
 %   likelihood conditioned on the observed outcome, to update the posterior 
 %   belief about the target vector. If an input surprise signal exceeds a 
-%   threshold (specified in the 'belief' structure), the current state of
-%   the posterior is stored in a cache as a new context, and the context
-%   prior is updated to include the new context entry (with corresponding 
-%   context IDs. The posterior is then reset to a uniform prior. The 
-%   function returns two binary flag ('resetFlag' and 'cacheFlag') about
+%   threshold (specified in the 'belief' structure), or if the agent first
+%   encounters an obstacle, the current target posterior is stored in a
+%   cache as a new context, a new cache entry is formed with a flat target 
+%   prior, and the context prior is updated to include the new context entry. 
+%   The function returns two binary flag ('resetFlag' and 'cacheFlag') about
 %   whether the posterior was reset and a cache occured.
 %
 %   See also: GETTARGETLIKELIHOOD
 
 
 % determine whether to reset belief
-if belief.resetFlag && numel(surprise)>belief.resetWindow-1 && all(surprise(end-belief.resetWindow+1:end)>belief.surpriseThreshold)
+if belief.resetFlag && ( ...
+        (numel(surprise)>belief.resetWindow-1 && all(surprise(end-belief.resetWindow+1:end)>belief.surpriseThreshold)) ...
+        || (numel(obstacleHit)>1 && sum(obstacleHit)<2 && obstacleHit(end)-obstacleHit(end-1)>0) )
     % signal reset
     resetFlag = 1;
 
