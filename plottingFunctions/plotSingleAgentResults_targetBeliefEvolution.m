@@ -1,4 +1,8 @@
-function plotSingleAgentResults_targetBeliefEvolution(singleAgentResults,environment,agent,trial,plotParams)
+function plotSingleAgentResults_targetBeliefEvolution(singleAgentResults,environment,agent,trial,plotParams,fixLimits)
+
+if nargin<6
+    fixLimits = false;
+end
 
 %---------------------- extract agent structures -------------------------%
 belief  = agent.belief;
@@ -28,7 +32,9 @@ for i=1:nTrials
     ax1(i) = subplot(3,nTrials,i);
     plotBelief(prior,belief,plotParams);
     hold on;plotAnchors(augmentedTrajectory,arena,belief,sampler,planner,plotParams,'polar',true,prior,0.5);
-    clim([0,.001])
+    if fixLimits
+        clim([0,.001])
+    end
     colormap(ax1(i),parula)
 
     % plot error maps
