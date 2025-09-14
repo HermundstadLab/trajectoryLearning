@@ -17,8 +17,13 @@ figure;
 set(gcf,'color','w','units','normalized','Position',[.025,.025,.95,.95]);
 nTrials = numel(trialIDs);
 
-nCols = 10;
-nRows = ceil(nTrials/nCols);
+if numel(trialIDs)<10
+    nCols = numel(trialIDs);
+    nRows = 1;
+else
+    nCols = 10;
+    nRows = ceil(nTrials/nCols);
+end
 
 for i=1:nTrials
    
