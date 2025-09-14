@@ -1,4 +1,6 @@
-function plotSingleAgentResults_contextBeliefEvolution(singleAgentResults,trial,plotParams)
+function plotSingleAgentResults_contextBeliefEvolution(singleAgentResults,agent,trial,plotParams)
+
+belief  = agent.belief;
 
 cmap = plotParams.cBlocks;
 
@@ -6,6 +8,8 @@ blockIDs = unique(trial.blockIDs);
 tBlock   = numel(find(trial.blockIDs==1));
 nBlocks  = numel(blockIDs);
 blockSwitches = [0,blockIDs]*tBlock+1;
+
+dt = 4;
 
 figure;set(gcf,'color','w','units','normalized','Position',[.025,.025,.7,.3]);
 
@@ -19,11 +23,11 @@ for i=1:nBlocks
     subplot(3,nBlocks,nBlocks+1:2*nBlocks);hold on;
     plot(1:trial.nTrials,singleAgentResults.belief.context.posteriors(i,:),'Linewidth',plotParams.lw,...
         'Color',cmap(i,:));
-    plot([inds(1)+4,inds(1)+4],[0,1],'--k')
+    plot([inds(1)+dt,inds(1)+dt],[0,1],'--k')
     
     subplot(3,nBlocks,2*nBlocks+i);hold on;  
     for j=1:nBlocks
-        h(j) = bar(j,singleAgentResults.belief.context.posteriors(j,inds(1)+4));
+        h(j) = bar(j,singleAgentResults.belief.context.posteriors(j,inds(1)+dt));
         set(h(j),'FaceColor', cmap(j,:));
     end
     ylim([0,1])
@@ -32,7 +36,7 @@ for i=1:nBlocks
     xlabel('context')
     ylabel('probability')
     set(gca,'fontsize',plotParams.fs)
-    title(['trial = ',num2str(inds(1)+4)])
+    title(['trial = ',num2str(inds(1)+dt)])
 
 end
 subplot(3,nBlocks,1:nBlocks);
@@ -49,3 +53,14 @@ yticks([0,0.5,1])
 xlabel('trial')
 ylabel('context posterior')
 set(gca,'fontsize',plotParams.fs)
+
+figure;set(gcf,'color','w','units','normalized','Position',[.025,.025,.7,.9]);
+
+for i=1:nBlocks
+    ind = blockSwitches(i)+dt;
+    for j=1:i
+        plotInd = (i-1)*nBlocks+j;
+        posterior = squeeze(singleAgentResults.belief.context.allCaches(j,:,:,ind));
+        subplot(nBlocks,nBlocks,plotInd);plotBelief(posterior,belief,plotParams);
+    end
+end
