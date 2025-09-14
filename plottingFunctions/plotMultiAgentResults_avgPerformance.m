@@ -1,4 +1,4 @@
-function [learningSpeed, avgPerformance, r] = plotMultiAgentResults_avgPerformance(multiAgentResults,agent,trial,plotParams)
+function [learningSpeed, avgPerformance, r] = plotMultiAgentResults_avgPerformance(multiAgentResults,agent,trial,plotParams,plotType)
 % PLOTRESULTS_AVGPERFORMANCE Plot average performance of a batch of agents.
 %
 %   PLOTRESULTS_AVGPERFORMANCE(multiAgentResults,agent,trial,plotParams) 
@@ -9,6 +9,9 @@ function [learningSpeed, avgPerformance, r] = plotMultiAgentResults_avgPerforman
 %
 %   See also: PLOTBELIEF, PLOTANCHORS, PLOTCONTROLPARAMS, PLOTTRAJECTORY
 
+if nargin<5
+    plotType = 'standard';
+end
 %---------------------- extract agent structures -------------------------%
 belief  = agent.belief;
 
@@ -35,19 +38,15 @@ for i=1:nBlocks
         inds2 = ceil(numel(inds)/2):numel(inds);
         rAvg(j) = mean(r(inds2,j));
 
-        if max(r(:,j))<=0.75
-            trialNo(j) = nTrials./nBlocks;
+        tcross = find(r(:,j)>=6./7,1,'first');
+        if numel(tcross)<1
+            trialNo(j) = nan;
         else
-            tcross = find(r(:,j)<0.75,1,'last');
-            if numel(tcross)<1
-                trialNo(j) = 1;
-            else
-                trialNo(j) = tcross;
-            end
-            
+            trialNo(j) = tcross;
         end
+
     end
-    learningSpeed(1,i)    = mean(trialNo);
+    learningSpeed(1,i)    = mean(trialNo,'omitnan');
     learningSpeed(2:3,i)  = quantile(trialNo,[.25,.75])';
 
     avgPerformance(1,i)   = mean(rAvg);
@@ -57,7 +56,13 @@ hold on;plotTswitch(blockIDs,tBlock,[0,1])
 yyaxis right
 for i=1:nBlocks
     inds = blockSwitches(i):blockSwitches(i+1)-1;
-    plotTrialAverages(inds,multiAgentResults.belief.target.rewardProb(inds,:),plotParams,cmap(i,:),'--','pred reward',0);
+    if strcmp(plotType,'standard')
+        plotTrialAverages(inds,multiAgentResults.belief.target.rewardProb(inds,:),plotParams,cmap(i,:),'--','pred reward',0);
+    elseif strcmp(plotType,'obstacle')
+        plotTrialAverages(inds,multiAgentResults.trajectory.obstacleHits(inds,:),plotParams,cmap(i,:),'--','obstacle hits',0);
+    else
+        error('unrecognized plot type')
+    end
 end
 % plot uncertainty and surprise
 fCache = sum(multiAgentResults.belief.target.resetFlag,2)./nAgents;
@@ -70,7 +75,7 @@ for i=1:nBlocks
     plotTrialAverages(inds,multiAgentResults.belief.target.posteriorEntropy(inds,:)./...
         multiAgentResults.belief.target.posteriorEntropyFlat,plotParams,cmap(i,:),'-','uncertainty',0);
 end
-%plot([1,nTrials],[multiAgentResults.belief.target.posteriorEntropyFlat,multiAgentResults.belief.target.posteriorEntropyFlat],'--k');
+
 yyaxis right
 for i=1:nBlocks
     inds = blockSwitches(i):blockSwitches(i+1)-1;
@@ -79,14 +84,20 @@ end
 plot([1,nTrials],[belief.surpriseThreshold,belief.surpriseThreshold],'--k')
 plotTswitch(blockIDs,tBlock,[0,2])
 scatter(ii,2.*ones(1,numel(ii)),fCache(ii)*nAgents,'k',...
-    'filled','MarkerFaceAlpha',.3)
+   'filled','MarkerFaceAlpha',.3)
 
 % plot number of anchors and distance along trajectory
 subplot(3,2,5);
 yyaxis left
 for i=1:nBlocks
     inds = blockSwitches(i):blockSwitches(i+1)-1;
-    plotTrialAverages(inds,multiAgentResults.trajectory.nAnchors(inds,:)-2,plotParams,cmap(i,:),'-','no. anchors',0);
+    if strcmp(plotType,'standard')
+        plotTrialAverages(inds,multiAgentResults.trajectory.nAnchors(inds,:)-2,plotParams,cmap(i,:),'-','no. anchors',0);
+    elseif strcmp(plotType,'obstacle')
+        plotTrialAverages(inds,multiAgentResults.trajectory.nPauses(inds,:)-2,plotParams,cmap(i,:),'-','no. pauses',0);
+    else
+        error('unrecognized plot type')
+    end
 end
 plot([1,nTrials],[1,1],'--k');
 plotTswitch(blockIDs,tBlock,[0,10])
@@ -106,8 +117,18 @@ axis off
 
 subplot(3,2,4);hold on;
 plot(trial.arena.xBoundary,trial.arena.yBoundary,'-k','linewidth',plotParams.lw);
-scatter(multiAgentResults.trajectory.finalAnchors.xCoords,multiAgentResults.trajectory.finalAnchors.yCoords,...
-    100,'k','filled','MarkerFaceAlpha',.3,'MarkerEdgeAlpha',.3)
+if strcmp(plotType,'standard')
+    scatter(multiAgentResults.trajectory.finalAnchors.xCoords(2:end-1),multiAgentResults.trajectory.finalAnchors.yCoords(2:end-1),...
+        100,'k','filled','MarkerFaceAlpha',.3,'MarkerEdgeAlpha',.3)
+elseif strcmp(plotType,'obstacle')
+
+    indAug  = find(multiAgentResults.trajectory.finalAnchors.augmented>.5);
+    indOrig = find(multiAgentResults.trajectory.finalAnchors.augmented<.5);
+    scatter(multiAgentResults.trajectory.finalAnchors.xCoords(indOrig),multiAgentResults.trajectory.finalAnchors.yCoords(indOrig),...
+        100,'b','filled','MarkerFaceAlpha',.3,'MarkerEdgeAlpha',.3)
+    scatter(multiAgentResults.trajectory.finalAnchors.xCoords(indAug),multiAgentResults.trajectory.finalAnchors.yCoords(indAug),...
+        100,'r','filled','MarkerFaceAlpha',.3,'MarkerEdgeAlpha',.3)
+end
 daspect([1,1,1])
 axis off
 
@@ -132,11 +153,11 @@ for i=1:nBlocks
     plot([i,i],learningSpeed(2:3,i),'color',cmap(i,:),'linewidth',plotParams.lw); hold on;
     plot(i,learningSpeed(1,i),'o','MarkerFaceColor',cmap(i,:),'MarkerEdgeColor','none','markersize',plotParams.ms)
 end
-plot([0,nBlocks+1],[mean(learningSpeed(1,:)),mean(learningSpeed(1,:))],'--k')
+plot([0,nBlocks+1],[min(learningSpeed(2,:)),min(learningSpeed(2,:))],'--k')
 xlim([0,nBlocks+1])
 ylim([0,100])
 xlabel('target number')
-ylabel('no. trials for r>0.75 ')
+ylabel('no. trials for r>6/7 ')
 set(gca,'fontsize',plotParams.fs)
 end
 
