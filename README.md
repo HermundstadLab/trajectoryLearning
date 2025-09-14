@@ -1,5 +1,5 @@
 # trajectoryLearning
-MATLAB code for training an agent to intercept a target in a spatial arena
+MATLAB code for training an agent to intercept a hidden target in a spatial arena
 
 The script main.m describes how to build and train an agent in different
 simulated environments.  It first builds data structures that specify the 
