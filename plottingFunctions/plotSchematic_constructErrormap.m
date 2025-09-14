@@ -29,7 +29,8 @@ figure;
 set(gcf,'color','w','units','normalized','Position',[.025,.025,.4,.8]);
 
 ax1 = subplot(3,2,1);
-plotBelief(plannedLikelihood(:,:,1),belief,plotParams,'planned likelihood');
+plotBelief(plannedLikelihood(:,:,1),belief,plotParams,'planned likelihood');hold on;
+plotTrajectory(plannedTrajectory,arena,planner,trial,1,plotParams,'planned','polar');
 colormap(ax1,parula)
 
 subplot(3,2,2);
@@ -37,6 +38,7 @@ plotTrajectory(plannedTrajectory,arena,planner,trial,1,plotParams,'planned','car
 
 ax2 = subplot(3,2,3);
 plotBelief(executedLikelihood(:,:,1),belief,plotParams,'executed likelihood');
+plotTrajectory(executedTrajectory,arena,planner,trial,1,plotParams,'executed','polar');
 colormap(ax2,parula)
 
 subplot(3,2,4);
