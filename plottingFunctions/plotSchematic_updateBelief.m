@@ -22,7 +22,7 @@ end
 outcome      = -reward+2;
 altOutcome   = mod(outcome,2)+1;
 posterior    = singleAgentResults.belief.target.posteriors(:,:,trialID);
-altPosterior = updateBelief(prior,likelihood,altOutcome,[],1,nan(size(prior)),[],belief);
+altPosterior = updateBelief(prior,likelihood,altOutcome,[],1,nan(size(prior)),[],[],belief);
 plotTitles   = {'reward','no reward'};
 
 executedTrajectory = singleAgentResults.trajectory.executed.path{trialID};
