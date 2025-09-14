@@ -73,120 +73,241 @@ plotMultiAgentResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
 %                        GENERATE MANUSCRIPT FIGURES                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% uncomment to simulate new data, rather than loading from file:
+
 % use same default environment for all simulations
-[agent,environment] = generateEnvironment('default');
+% [agent,environment] = generateEnvironment('default');
+
+% set number of agents
+% nAgents = 200;
 
 %%                    FIGURE 2: ILLUSTRATE ALGORITHM                     %%
 
-%--------------- run single agent, illustrate results --------------------%
-agent = generateAgent(agent,'default','resetFlag',false,'cacheFlag',false);
-trial = generateTrialStructure(environment,'singleTarget');
-singleAgentResults = runSingleAgent(agent,trial);
+%------------------- set parameters for single agent ---------------------%
+resetFlag  = false;
+cacheFlag  = false;
+simType    = 'single';
+exptType   = 'singleTarget';
 
+
+%-------------------- run simulations for single agent -------------------%
+% agent = generateAgent(agent,'default','resetFlag',resetFlag,'cacheFlag',cacheFlag);
+% trial = generateTrialStructure(environment,expType);
+% singleAgentResults = runSingleAgent(agent,trial);
+
+
+%------------ load data from an example agent (used in Fig 3) ------------%
+learningSpeed = 8;
+[agent,environment,trial,singleAgentResults] = loadSimulations(simType,exptType,resetFlag,cacheFlag,learningSpeed);
+
+
+%--------------------------- plot results --------------------------------%
 trialID = 2;
 
-% FIG 2E: schematic of trajectory planner 
+% FIG 2D: schematic of trajectory planner 
 plotSchematic_planTrajectory(singleAgentResults,environment,agent,trial,trialID,plotParams);
 
-% FIG 2F: schematic of belief update
+% FIG 2E: schematic of belief update
 plotSchematic_updateBelief(singleAgentResults,environment,agent,trial,trialID,plotParams);
 
-% FIG 2G: schematic of anchor sampling
-plotSchematic_sampleAnchors(singleAgentResults,arena,belief,sampler,planner,trialID,plotParams);
+% FIG 2F: schematic of anchor sampling
+plotSchematic_sampleAnchors(singleAgentResults,environment,agent,trialID,plotParams);
+
+% Fig 2H: consolidation of belief over time within a single agent
+plotSingleAgentResults_targetBeliefEvolution(singleAgentResults,environment,agent,trial,plotParams)
 
 
 %%                      FIGURE 3: SINGLE TARGET                          %%
 
-%-------------- run multiple agents, illustrate results ------------------%
-agent = generateAgent(agent,'default','resetFlag',false,'cacheFlag',false);
-trial = generateTrialStructure(environment,'singleTarget');
+%------------------ set parameters for multiple agents -------------------%
+resetFlag  = false;
+cacheFlag  = false;
+simType    = 'multiple';
+exptType   = 'singleTarget';
 
 
+%--------------- simulate multiple agents on single target ---------------%
+% agent = generateAgent(agent,'default','resetFlag',resetFlag,'cacheFlag',cacheFlag);
+% trial = generateTrialStructure(environment,exptType);
+% multiAgentResults = runMultipleAgents(nAgents,agent,trial);
+
+
+%------------------- load data from multiple agents ----------------------%
+[agent,environment,trial,multiAgentResults] = loadSimulations(simType,exptType,resetFlag,cacheFlag);
+
+%---------------------- load data from single agents ---------------------%
+[~,~,~,singleAgentResults1] = loadSimulations('single',exptType,resetFlag,cacheFlag,5);
+[~,~,~,singleAgentResults2] = loadSimulations('single',exptType,resetFlag,cacheFlag,8);
+[~,~,~,singleAgentResults3] = loadSimulations('single',exptType,resetFlag,cacheFlag,11);
+
+%--------------------------- plot results --------------------------------%
 % Fig 3A: average learning results for single target 
-nAgents = 200;
-multiAgentResults = runMultipleAgents(nAgents,agent,trial);
-plotMultiAgentResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
-
-% Fig 3B: consolidation of belief over time within a single agent
-singleAgentResults = runSingleAgent(agent,trial);
-plotSingleAgentResults_targetBeliefEvolution(singleAgentResults,environment,agent,trial,plotParams);
-
-% Fig 3D: immediate generalization to new entrances
-trial = generateTrialStructure(environment,'new entry','nBlocks',4,'nTrialsPerBlock',20);
-singleAgentResults = runSingleAgent(agent,trial);
-trialIDs = [20,40,60,80];
-plotSingleAgentResults_trajectories(singleAgentResults,environment,agent,trial,trialIDs,plotParams)
-
-
-%%                      FIGURE 4: MULTIPLE TARGETS                       %%
-
-%------- run agents on 2 targets, with and without surprise reset --------%
-
-agent1 = generateAgent(agent,'default','resetFlag',false,'cacheFlag',false);
-agent2 = generateAgent(agent,'default','resetFlag',true,'cacheFlag',false);
-trial  = generateTrialStructure(environment,'multiTarget','nBlocks',2);
-
-nAgents = 5;
-multiAgentResults1 = runMultipleAgents(nAgents,agent1,trial);  
-multiAgentResults2 = runMultipleAgents(nAgents,agent2,trial);   
-
-% Fig 4A: compare average performance with and without target switch
-plotMultiAgentResults_surpriseReset(multiAgentResults1,multiAgentResults2,agent,trial,plotParams);
-
-
-%-------------- run agents on 5 targets with surprise reset --------------%
-nAgents = 5;
-trial  = generateTrialStructure(environment,'multiTarget','nBlocks',5);
-multiAgentResults = runMultipleAgents(nAgents,agent2,trial);
-
-% Fig 4B: average performance and speed of learning
 plotMultiAgentResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
 
 
-%%                          FIGURE 5: CACHING                            %%
+%%                     FIGURE 4: OBSTACLE AVOIDANCE                      %%
 
-%--------------- run single agent on 5 targets with caching --------------%
+%------------------ set parameters for single agents ---------------------%
+resetFlag  = true;
+cacheFlag  = true;
+simType    = 'single';
+exptType   = 'obstacle';
 
-agent = generateAgent(agent,'default','resetFlag',true,'cacheFlag',true);
-trial  = generateTrialStructure(environment,'multiTarget','nBlocks',5);
-
-% Fig 5C-D: angle to first anchor point and context posterior over time
-singleAgentResults = runSingleAgent(agent,trial);
-plotSingleAgentResults_contextBeliefEvolution(singleAgentResults,trial,plotParams)
+%------ simulate single agent on single target with obstacle -------------%
+% agent = generateAgent(agent,'default','resetFlag',true,'cacheFlag',true);
+% trial = generateTrialStructure(environment,'obstacle');
+% singleAgentResults = runSingleAgent(agent,trial);
 
 
-%%                     FIGURE 6: OBSTACLE AVOIDANCE                      %%
+%------------------- load data from an example agent ---------------------%
+learningSpeed = 7;
+[agent,environment,trial,singleAgentResults] = loadSimulations(simType,exptType,resetFlag,cacheFlag,learningSpeed);
 
-%-------------- illustrate construction & use of errormap ----------------%
-agent = generateAgent(agent,'default','resetFlag',true,'cacheFlag',false);
-trial  = generateTrialStructure(environment,'obstacle');
 
-singleAgentResults = runSingleAgent(agent,trial);
+%--------------------------- plot results --------------------------------%
 
-% Fig 6A: illustrate construction of errormap
+% Fig 4A: illustrate construction of errormap
 plotSchematic_constructErrormap(environment,agent,trial,plotParams);
 
-% Fig 6B: illustrate use of errormap
+% Fig 4B: illustrate use of errormap
 trialID = 10;
 plotSchematic_augmentAnchors(singleAgentResults,environment,agent,trial,trialID,plotParams)
 
-% Fig 6C: illustrate co-evolution of belief and errormap
+% Fig 4C: illustrate co-evolution of belief and errormap
 plotSingleAgentResults_targetBeliefEvolution(singleAgentResults,environment,agent,trial,plotParams)
 
 
-%------ run multiple agents obstacle, plot trial-averaged results --------%
-nAgents = 5;
-multiAgentResults = runMultipleAgents(nAgents,agent,trial);
+%------------------ set parameters for multiple agents -------------------%
+resetFlag  = true;
+cacheFlag  = true;
+simType    = 'multiple';
+exptType   = 'interleavedObstacle';
 
-% Fig 6D: average performance when obstacle introduced from first trial
+%----------- simulate multiple agents on interleaved obstacle ------------%
+%trial  = generateTrialStructure(environment,exptType);
+%multiAgentResults = runMultipleAgents(nAgents,agent,trial);
+
+
+%------------------ load data from multiple agents -----------------------%
+[agent,environment,trial,multiAgentResults] = loadSimulations(simType,exptType,resetFlag,cacheFlag);
+
+
+%---------------------- load data from single agents ---------------------%
+[~,~,~,singleAgentResults1] = loadSimulations('single',exptType,resetFlag,cacheFlag,4);
+[~,~,~,singleAgentResults2] = loadSimulations('single',exptType,resetFlag,cacheFlag,8);
+[~,~,~,singleAgentResults3] = loadSimulations('single',exptType,resetFlag,cacheFlag,11);
+
+
+%--------------------------- plot results --------------------------------%
+% Fig 4D: average performance when obstacle introduced after learning
 plotMultiAgentResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
 
-% Fig 6E: average performance when obstacle introduced after learning
-trial  = generateTrialStructure(environment,'interleaved obstacle');
-multiAgentResults = runMultipleAgents(nAgents,agent,trial);
+% Fig 4H: illustration of trajectories over time for single agent
+trialIDs = 101:130;
+plotSingleAgentResults_trajectories(singleAgentResults3,environment,agent,trial,trialIDs,plotParams,'cartScatter');
 
+
+%%                      FIGURE 5: MULTIPLE TARGETS                       %%
+
+%------------------ set parameters for multiple agents -------------------%
+cacheFlag  = false;
+simType    = 'multiple';
+exptType   = 'targetSwitch';
+
+%-------------- simulate multiple agents w/ and w/out reset --------------%
+% agent1 = generateAgent(agent,'default','resetFlag',false,'cacheFlag',cacheFlag);
+% agent2 = generateAgent(agent,'default','resetFlag',true,'cacheFlag',cacheFlag);
+% trial  = generateTrialStructure(environment,exptType);
+
+% multiAgentResults1 = runMultipleAgents(nAgents,agent1,trial);  
+% multiAgentResults2 = runMultipleAgents(nAgents,agent2,trial);   
+
+
+%------------------ load data from multiple agents -----------------------%
+[  ~  ,    ~      ,  ~  ,multiAgentResults1] = loadSimulations(simType,exptType,false,cacheFlag);
+[agent,environment,trial,multiAgentResults2] = loadSimulations(simType,exptType,true, cacheFlag);
+
+learningSpeed = 5;
+[~,~,~,singleAgentResults] = loadSimulations('single',exptType,false,cacheFlag,learningSpeed);
+
+%--------------------------- plot results --------------------------------%
+% Fig 5A: Illustrate surprise reset
+plotSchematic_surpriseReset(singleAgentResults,environment,agent,trial,100,plotParams)
+
+% Fig 5B-C: compare average performance with and without target switch
+plotMultiAgentResults_surpriseReset(multiAgentResults1,multiAgentResults2,agent,trial,plotParams);
+
+
+%------------------ set parameters for multiple agents -------------------%
+resetFlag  = true;
+cacheFlag  = false;
+simType    = 'multiple';
+exptType   = 'multiTarget';
+
+%---- simulate multiple agents on 5 targets, with surprise reset ---------%
+% trial  = generateTrialStructure(environment,exptType);
+% multiAgentResults = runMultipleAgents(nAgents,agent,trial);
+
+
+%------------------ load data from multiple agents -----------------------%
+[agent,environment,trial,multiAgentResults] = loadSimulations(simType,exptType,resetFlag,cacheFlag);
+
+
+%--------------------------- plot results --------------------------------%
+% Fig 5B: average performance and speed of learning
 plotMultiAgentResults_avgPerformance(multiAgentResults,agent,trial,plotParams);
 
 
-%%                  SI FIG: MEMORY DECAY AND PEAK SURPRISE               %%
-sweepOutcomeSurprise(environment,agent);
+%%                          FIGURE 6: CACHING                            %%
+
+%------------------ set parameters for single agent ----------------------%
+resetFlag  = true;
+cacheFlag  = true;
+simType    = 'single';
+exptType   = 'multiTarget';
+
+
+%------ simulate single agent on multiple targets with caching -----------%
+% agent = generateAgent(agent,'default','resetFlag',resetFlag,'cacheFlag',cacheFlag);
+% trial  = generateTrialStructure(environment,exptType);
+% singleAgentResults = runSingleAgent(agent,trial);
+
+
+%------------------ load data from multiple agents -----------------------%
+learningSpeed = 9;
+[agent,environment,trial,singleAgentResults] = loadSimulations(simType,exptType,resetFlag,cacheFlag,learningSpeed);
+load('sims/multiAgent_5Blocks_noObstacle_reset_cache_defaultEntry_summary.mat');
+
+
+%--------------------------- plot results --------------------------------%
+% Fig 6C: angle to first anchor and evolution of context belief for single agent
+plotSingleAgentResults_contextBeliefEvolution(singleAgentResults,agent,trial,plotParams)
+
+% Fig 6D: evolution of context belief for multiple agents
+plotMultiAgentResults_contextBelief(multiAgentResults,previousContexts,sampledContexts,plotParams);
+
+
+%%                     FIGURE 7: ALLOCENTRIC NAVIGATION                  %%
+
+%------------------ set parameters for single agent ----------------------%
+resetFlag  = true;
+cacheFlag  = true;
+simType    = 'single';
+exptType   = 'newEntry';
+
+
+%----------- simulate single agent entering from different locations -----%
+% agent = generateAgent(agent,'default','resetFlag',resetFlag,'cacheFlag',cacheFlag);
+% trial = generateTrialStructure(environment,exptType);
+% singleAgentResults = runSingleAgent(agent,trial);
+
+
+%-------------------- load data from single agent ------------------------%
+learningSpeed = 7;
+[agent,environment,trial,singleAgentResults] = loadSimulations(simType,exptType,resetFlag,cacheFlag,learningSpeed);
+
+
+%--------------------------- plot results --------------------------------%
+% Fig 7C: immediate generalization to new entrances
+trialIDs = [20,40,60,80];
+plotSingleAgentResults_trajectories(singleAgentResults,environment,agent,trial,trialIDs,plotParams)
