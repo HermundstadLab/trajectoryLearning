@@ -19,10 +19,10 @@ function [agent,environment] = generateEnvironment(envType,varargin)
 %   'arenaWidth':               width of arena
 %   'arenaAspectRatio':         aspect ratio of arena (height relative to width)
 %   'arenaNp':                  number of points to use in discretizing the environment
-%   'agentRelativeWidth':       relative width of agent (relative to arena width) 
+%   'agentWidth':               width of agent 
 %   'targetRelativeWidth':      width of target, relative to arena
 %   'obstacleRelativeWidth':    width of obstacle, relative to arena
-%   'obstacleAspectRatio':      width of obstacle, relative to arena
+%   'obstacleAspectRatio':      aspect ratio of obstacle (height relative to width)
 %
 %   See also: GENERATEAGENT, GENERATETRIALSTRUCTURE
 
@@ -50,7 +50,7 @@ p = inputParser;
 if strcmp(envType,'default')
     %generate rectangular arena, target, and obstacle
 
-    default_agentRelativeWidth    = 0.05;     % relative width of agent    
+    default_agentWidth            = 0.5;      % width of agent
 
     default_arenaWidth            = 10;       % width of arena
     default_arenaAspectRatio      = 1;        % aspect ratio of arena (height relative to width)
@@ -82,7 +82,7 @@ addParameter(p,'arenaNp',default_arenaNp,validateInteger)
 addParameter(p,'targetRelativeWidth',default_targetRelativeWidth,validateLessThanOne)
 addParameter(p,'obstacleRelativeWidth',default_obstacleRelativeWidth,validateLessThanOne)
 
-addParameter(p,'agentRelativeWidth',default_agentRelativeWidth,validateNumeric)
+addParameter(p,'agentWidth',default_agentWidth,validateNumeric)
 addParameter(p,'arenaWidth',default_arenaWidth,validateNumeric)
 addParameter(p,'arenaAspectRatio',default_arenaAspectRatio,validateNumeric)
 addParameter(p,'targetAspectRatio',default_targetAspectRatio,validateNumeric)
@@ -100,7 +100,7 @@ targetParams.aspectRatio     = p.Results.targetAspectRatio;
 obstacleParams.relativeWidth = p.Results.obstacleRelativeWidth;
 obstacleParams.aspectRatio   = p.Results.obstacleAspectRatio;
 
-agentWidth = p.Results.agentRelativeWidth.*p.Results.arenaWidth;
+agentWidth = p.Results.agentWidth;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                    ARENA SPACE (CARTESIAN COORDINATES)                  %
@@ -142,6 +142,7 @@ obstacleHeight = obstacleWidth.*obstacleParams.aspectRatio;             % width 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %--------------------- define axes for belief computation ----------------%
+%            maps internal belief coordinates onto physical units         %
 
 thBounds = [atan2(yBounds_agent(1),xBounds_agent(2)),...                % convert arena boundaries to polar coordinates
     atan2(yBounds_agent(1),xBounds_agent(1))];                          % angular boundaries of arena
