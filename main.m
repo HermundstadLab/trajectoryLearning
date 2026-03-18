@@ -311,3 +311,17 @@ learningSpeed = 7;
 % Fig 7C: immediate generalization to new entrances
 trialIDs = [20,40,60,80];
 plotSingleAgentResults_trajectories(singleAgentResults,environment,agent,trial,trialIDs,plotParams)
+
+%%                 SI FIGURE 2: VARYING ENVIRONMENT SIZE                 %%
+
+%------------------ set parameters for multiple agents -------------------%
+resetFlag  = false;
+cacheFlag  = false;
+simType    = 'multiple';
+exptType   = 'singleTarget';
+scale      = 2:2:10;
+
+%--------------- simulate multiple agents on single target ---------------%
+% agent = generateAgent(agent,'default','resetFlag',resetFlag,'cacheFlag',cacheFlag,'arenaScale',scale(i));
+% trial = generateTrialStructure(environment,exptType);
+% multiAgentResults = runMultipleAgents(nAgents,agent,trial);
