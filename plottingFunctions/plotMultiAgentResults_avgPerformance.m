@@ -1,7 +1,7 @@
 function [learningSpeed, avgPerformance, r] = plotMultiAgentResults_avgPerformance(multiAgentResults,agent,trial,plotParams,plotType)
-% PLOTRESULTS_AVGPERFORMANCE Plot average performance of a batch of agents.
+% PLOTMULTIAGENTRESULTS_AVGPERFORMANCE Plot average performance of a batch of agents.
 %
-%   PLOTRESULTS_AVGPERFORMANCE(multiAgentResults,agent,trial,plotParams) 
+%   PLOTMULTIAGENTRESULTS_AVGPERFORMANCE(multiAgentResults,agent,trial,plotParams) 
 %   plots the average performance of a batch of agents. This includes the
 %   actual and predicted reward rates (subplot 1), the uncertainty and
 %   outcome surprise (subplot 2), and the number of anchors and path length
