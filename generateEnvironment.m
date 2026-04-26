@@ -19,6 +19,7 @@ function [agent,environment] = generateEnvironment(envType,varargin)
 %   'arenaWidth':               width of arena
 %   'arenaAspectRatio':         aspect ratio of arena (height relative to width)
 %   'arenaNp':                  number of points to use in discretizing the environment
+%   'arenaScale:                scale factor used to change environment size
 %   'agentWidth':               width of agent 
 %   'targetRelativeWidth':      width of target, relative to arena
 %   'obstacleRelativeWidth':    width of obstacle, relative to arena
@@ -52,6 +53,9 @@ if strcmp(envType,'default')
 
     default_agentWidth            = 0.5;      % width of agent
 
+    default_arenaScale            = 1;        % scale factor used for changing environment size 
+                                              % (scales all relevant parameters)
+
     default_arenaWidth            = 10;       % width of arena
     default_arenaAspectRatio      = 1;        % aspect ratio of arena (height relative to width)
     default_arenaNp               = 100;      % number of points to use in discretizing the environment
@@ -83,6 +87,7 @@ addParameter(p,'targetRelativeWidth',default_targetRelativeWidth,validateLessTha
 addParameter(p,'obstacleRelativeWidth',default_obstacleRelativeWidth,validateLessThanOne)
 
 addParameter(p,'agentWidth',default_agentWidth,validateNumeric)
+addParameter(p,'arenaScale',default_arenaScale,validateNumeric)
 addParameter(p,'arenaWidth',default_arenaWidth,validateNumeric)
 addParameter(p,'arenaAspectRatio',default_arenaAspectRatio,validateNumeric)
 addParameter(p,'targetAspectRatio',default_targetAspectRatio,validateNumeric)
@@ -90,11 +95,12 @@ addParameter(p,'obstacleAspectRatio',default_obstacleAspectRatio,validateNumeric
 
 parse(p,envType,varargin{:})
 
-arenaParams.width            = p.Results.arenaWidth;
+arenaParams.scale            = p.Results.arenaScale;
+arenaParams.width            = p.Results.arenaWidth.*p.Results.arenaScale;
 arenaParams.aspectRatio      = p.Results.arenaAspectRatio;
-arenaParams.np               = p.Results.arenaNp;   
+arenaParams.np               = ceil(p.Results.arenaNp.*sqrt(p.Results.arenaScale));  
 
-targetParams.relativeWidth   = p.Results.targetRelativeWidth;
+targetParams.relativeWidth   = p.Results.targetRelativeWidth./p.Results.arenaScale;
 targetParams.aspectRatio     = p.Results.targetAspectRatio;
 
 obstacleParams.relativeWidth = p.Results.obstacleRelativeWidth;
@@ -198,6 +204,7 @@ environment.params = p.Results;
 
 agent.belief.size           = arenaSizePolar;
 agent.belief.np             = arenaParams.np;
+agent.belief.scale          = arenaParams.scale;
 agent.belief.thAxes         = thAxes;
 agent.belief.rAxes          = rAxes;
 agent.belief.thMin          = min(thBounds);

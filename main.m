@@ -321,7 +321,10 @@ simType    = 'multiple';
 exptType   = 'singleTarget';
 scale      = 2:2:10;
 
-%--------------- simulate multiple agents on single target ---------------%
-% agent = generateAgent(agent,'default','resetFlag',resetFlag,'cacheFlag',cacheFlag,'arenaScale',scale(i));
-% trial = generateTrialStructure(environment,exptType);
-% multiAgentResults = runMultipleAgents(nAgents,agent,trial);
+%------- simulate multiple agents for environments of differing size -----%
+% for i=1:numel(scale)
+%     [agent,environment] = generateEnvironment('default','arenaScale',scale(i));
+%     agent = generateAgent(agent,'default','resetFlag',resetFlag,'cacheFlag',cacheFlag);
+%     trial = generateTrialStructure(environment,exptType);
+%     multiAgentResults = runMultipleAgents(nAgents,agent,trial);
+% end

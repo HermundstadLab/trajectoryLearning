@@ -49,7 +49,8 @@ default_uniformPriorThreshold = 0.001;                  % threshold for detectin
 
 %----------- target belief -----------%
 default_likelihoodRange       = 0.9;                    % max range of likelihood (btw 0 and 1)    
-default_likelihoodSigma       = 0.075;                  % SD of gaussian likelihood, expressed as percentage of belief space (n.u.) 
+default_likelihoodSigma       = 0.075./...              % SD of gaussian likelihood, expressed as percentage of belief space (n.u.) 
+    (agent.belief.scale.^1.5);  
 
 default_resetFlag             = true;                   % determines whether to reset belief
                                                         % options: true/false
@@ -70,7 +71,7 @@ default_anchorOrderMethod     = 'TSP';                  % type of ordering to us
                                                         %          'angle' (sorts anchors based on angle)
 default_anchorTolMerge        = 0.05;                   % tolerance for merging anchors (n.u.)
 default_anchorTolShift        = 0.005;                  % tolerance for shifting anchors (n.u.)    
-default_anchorInit            = 8;                      % initial number of anchors
+default_anchorInit            = 8;                      % initial number of anchors                    
 default_anchorTolScaling      = true;                   % determines whether to scale tolerances around individual anchors 
                                                         % options: true (scale tolerances based on width of posterior peaks)
                                                         %          false (used fixed tolerance for all anchors       
@@ -153,7 +154,7 @@ parse(p,agent,agentType,varargin{:})
 agent.belief.rangeL         = p.Results.likelihoodRange;                   
 agent.belief.sigmaL         = p.Results.likelihoodSigma*agent.belief.np;        % SD of gaussian likelihood (n.u.) 
 
-agent.belief.npExclude      = p.Results.anchorTolMerge.*agent.belief.np;        % radial distance to exclude around home port (n.u.)
+agent.belief.npExclude      = ceil(p.Results.anchorTolMerge.*agent.belief.np);  % radial distance to exclude around home port (n.u.)
 agent.belief.rMinAnchors    = agent.belief.rMin + ...                           % define minimum radius for anchors selected beyond home port
     p.Results.anchorTolMerge*(agent.belief.rMax-agent.belief.rMin);
 
