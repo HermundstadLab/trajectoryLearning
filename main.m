@@ -38,8 +38,7 @@
 %% load auxiliary and plotting functions
 
 addpath("auxiliaryFunctions/","auxiliaryFunctions/peaks2/",...
-    "plottingFunctions/","sims/","plottingFunctions/aux/",...
-    "parameterSweeps/");
+    "plottingFunctions/","sims/","plottingFunctions/aux/");
 
 
 %% load plotting parameters
