@@ -1,5 +1,5 @@
 function [anchors,peaks] = plotAnchors(trajectory,arena,belief,sampler,planner,plotParams,coordFrame,candAnchors,prior,samplingFrac)
-% PLOTANCHORS Plot a single trajectory embedded in the arena.
+% PLOTANCHORS Plots anchor points along a single trajectory.
 %
 %   PLOTANCHORS(trajectory,arena,trial,trialID,plotParams,coordFrame) plots 
 %   the agent's anchor points in either cartesian or polar coordinates. This 
