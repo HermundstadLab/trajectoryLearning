@@ -1,5 +1,5 @@
 # trajectoryLearning
-MATLAB code for AbdelRahman NY, Jiang W, Coddington LT, Gong S, +Dudman JT, +Hermundstad AM, Composing trajectories for rapid inference of navigational goals.
+MATLAB code for AbdelRahman NY, Jiang W, Coddington LT, Gong S, +Dudman JT, +Hermundstad AM, Composing trajectories for rapid inference of navigational goals (2026).
 
 The script main.m describes how to build and train an agent in different
 simulated environments.  It first builds data structures that specify the 
