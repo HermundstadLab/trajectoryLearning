@@ -46,7 +46,7 @@ elseif strcmp(coordFrame,'cartScatter')
     vmax = max(trajectory.velocity);
     % plot trajectory, target, and obstacle (if applicable)
     fill(arena.xBoundary,arena.yBoundary,plotParams.cArena,'linestyle','none');hold on;
-    scatter(trajectory.xCoords,trajectory.yCoords,20,trajectory.velocity,'filled');
+    scatter(trajectory.xCoords,trajectory.yCoords,20,trajectory.velocity,'filled');colormap(plasma);
     clim([.2*vmax,1.1*vmax]);
     
     
